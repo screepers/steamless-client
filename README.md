@@ -21,7 +21,7 @@ it is the official client but running in the browser of your choice.
 
 ```sh
 npm install -g screepers-steamless-client
-npx screepser-steamless-client
+npx screepers-steamless-client
 
 ```
 
