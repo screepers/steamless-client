@@ -235,7 +235,7 @@ addEventListener('message', event => {
 					text = text.replace('http://"+s.options.host+":"+s.options.port+"/room-history', historyUrl);
 
 					// Replace official CDN with local assets
-					text = text.replace(/https:\/\/d3os7yery2usni\.cloudfront\.net\//g, `${info.backend}/assets/`);
+					text = text.replace('https://d3os7yery2usni.cloudfront.net', `${info.backend}/assets/`);
 				}
 			}
 			return beautify ? jsBeautify(text) : text;
