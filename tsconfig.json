@@ -3,7 +3,6 @@
 		"baseUrl": "src",
 		"outDir": "dist",
 		"rootDir": "src",
-
 		"allowSyntheticDefaultImports": true,
 		"declaration": true,
 		"lib": [ "esnext", "dom" ],
@@ -13,6 +12,7 @@
 		"sourceMap": true,
 		"strict": true,
 		"target": "esnext",
+		"skipLibCheck": true
 	},
 	"include": [ "src" ],
 }

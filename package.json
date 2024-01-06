@@ -1,7 +1,7 @@
 {
-  "name": "screeps-steamless-client",
+  "name": "screepers-steamless-client",
   "type": "module",
-  "version": "1.2.0",
+  "version": "1.2.4",
   "bin": "dist/index.js",
   "scripts": {
     "eslint": "eslint $(git ls-files '*.ts' '*.tsx')",
@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/laverdet/screeps-steamless-client.git"
+    "url": "git+https://github.com/screepers/steamless-client"
   },
-  "author": "https://github.com/laverdet/",
+  "author": "laverdet",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/laverdet/screeps-steamless-client/issues"
+    "url": "https://github.com/screepers/steamless-client/issues"
   },
-  "homepage": "https://github.com/laverdet/screeps-steamless-client#readme",
+  "homepage": "https://github.com/screepers/steamless-client#readme",
   "devDependencies": {
     "@laverdet/eslint-config": "github:laverdet/eslint-config#a12fa0a782425b584992fc937eb0db43642b560a",
     "@types/argparse": "2.0.10",

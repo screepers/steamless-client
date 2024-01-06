@@ -1,6 +1,7 @@
 # Screeps Steamless Client
 
 ## About
+
 This package surfaces the [Screeps](https://screeps.com/) client in the browser of your choice for
 users who have purchased the [official Screeps
 app](https://store.steampowered.com/app/464350/Screeps/) on Steam.
@@ -16,11 +17,12 @@ This client just serves up the Screeps client files which are already sitting in
 It also adds some basic endpoints for authentication via Steam OpenID. For all intents and purposes
 it is the official client but running in the browser of your choice.
 
-
 ## Installation & Use
-```
-npm install -g screeps-steamless-client
-npx screeps-steamless-client
+
+```sh
+npm install -g screepers-steamless-client
+npx screepers-steamless-client
+
 ```
 
 You must visit a specially crafted local URL in order to specify the server you want to connect to.
@@ -34,6 +36,7 @@ local server which can be enabled with
 be enabled by default.
 
 ## Tips
+
 This client makes use of "guest mode" which is enabled by default in
 [xxscreeps](https://github.com/laverdet/xxscreeps/). This will provide you with a read-only view of
 the server when you are not signed in. The client will show you as signed in as user Guest and your
