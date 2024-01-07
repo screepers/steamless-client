@@ -173,7 +173,7 @@ addEventListener('message', event => {
 			body = body.replace(/<script[^>]*>[^>]*mxpnl[^>]*<\/script>/g, '<script>mixpanel = new Proxy(() => mixpanel, { get: () => mixpanel })</script>');
 			body = body.replace(/<script[^>]*>[^>]*twttr[^>]*<\/script>/g, '<script>twttr = new Proxy(() => twttr, { get: () => twttr })</script>');
 			body = body.replace(/<script[^>]*>[^>]*onRecaptchaLoad[^>]*<\/script>/g, '<script>function onRecaptchaLoad(){}</script>');
-      return body;
+			return body;
 		} else if (path === 'config.js') {
 			const history = argv.backend ? '/room-history/' : `/(${info.backend})/room-history/`;
 			const api = argv.backend ? '/api/' : `/(${info.backend})/api/`;
