@@ -204,7 +204,8 @@ addEventListener('message', event => {
 						return JSON.parse(await response.text());
 					} catch (err) {}
 				}();
-				const official = backend.hostname === 'screeps.com' || version?.serverData?.features?.some((f: any) => f.name.toLowerCase() === 'official-like') ?? false;
+				const officialLike = version?.serverData?.features?.some((f: any) => f.name.toLowerCase() === 'official-like') ?? false;
+				const official = backend.hostname === 'screeps.com' || officialLike;
 
 				// Look for server options payload in build information
 				for (const match of text.matchAll(/\boptions=\{/g)) {
