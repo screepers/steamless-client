@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import os from 'os';
+import path from 'path';
 import { promises as fs } from 'fs';
 import { Transform } from 'stream';
 import { pathToFileURL } from 'url';
@@ -10,6 +11,7 @@ import koaConditionalGet from 'koa-conditional-get';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
 import fetch from 'node-fetch';
+import { getGamePath } from "steam-game-path";
 
 // Parse program arguments
 const argv = function() {
@@ -51,18 +53,16 @@ proxy.on('error', err => console.error(err));
 
 // Locate and read `package.nw`
 const [ data, stat ] = await async function() {
-	const path = argv.package ?? function() {
-		switch (process.platform) {
-			case 'darwin': return new URL('./Library/Application Support/Steam/steamapps/common/Screeps/package.nw', `${pathToFileURL(os.homedir())}/`);
-			case 'win32': return 'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Screeps\\package.nw';
-			default: return undefined;
-		}
-	}();
-	if (!path) {
+	const pkgPath = argv.package ?? function() {
+    const steam = getGamePath(464350);
+      if (!steam || !steam.game) return undefined;
+      return path.join(steam.game.path, "package.nw");
+    }();
+	if (!pkgPath) {
 		console.log('Could not find `package.nw`. Please check `--package` argument');
 		process.exit(1);
 	}
-	return Promise.all([ fs.readFile(path), fs.stat(path) ]);
+	return Promise.all([ fs.readFile(pkgPath), fs.stat(pkgPath) ]);
 }();
 
 // Read package zip metadata
@@ -204,7 +204,8 @@ addEventListener('message', event => {
 						return JSON.parse(await response.text());
 					} catch (err) {}
 				}();
-				const official = backend.hostname === 'screeps.com' || version?.serverData?.features?.some((f: any) => f.name.toLowerCase() === 'official-like') ?? false;
+				const officialLike = version?.serverData?.features?.some((f: any) => f.name.toLowerCase() === 'official-like') ?? false;
+				const official = backend.hostname === 'screeps.com' || officialLike;
 
 				// Look for server options payload in build information
 				for (const match of text.matchAll(/\boptions=\{/g)) {
