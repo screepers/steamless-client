@@ -1,17 +1,15 @@
 #!/usr/bin/env node
-import os from 'os';
-import path from 'path';
-import { promises as fs } from 'fs';
-import { Transform } from 'stream';
-import { pathToFileURL } from 'url';
 import { ArgumentParser } from 'argparse';
+import { createReadStream, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
-import Koa from 'koa';
-import koaConditionalGet from 'koa-conditional-get';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
+import Koa from 'koa';
+import koaConditionalGet from 'koa-conditional-get';
 import fetch from 'node-fetch';
+import path from 'path';
 import { getGamePath } from "steam-game-path";
+import { Transform } from 'stream';
 
 // Parse program arguments
 const argv = function() {
@@ -97,6 +95,14 @@ const extract = (url: string) => {
 
 // Serve client assets directly from steam package
 koa.use(koaConditionalGet());
+koa.use(async (context, next) => {
+  if (context.path === "/index.html") {
+    context.type = "html";
+    context.body = createReadStream(`src\\${context.path}`);
+    return;
+  }
+  return next();
+});
 koa.use(async(context, next) => {
 	const info = extract(context.path);
 	if (!info) {
@@ -312,5 +318,9 @@ server.on('upgrade', (req, socket, head) => {
 console.log(
 	`🌎 Listening -- http://${host}:${port}/${
 		argv.backend ? '' : '(https://screeps.com)/'
+	}`
+);
+console.log(
+	`📜 Server list -- http://${host}:${port}/index.html
 	}`
 );
