@@ -1,68 +1,31 @@
 <html>
 
 <head>
-    <style>
-        a {
-            color: white;
-            text-underline-offset: 1000px;
-            font-family: consolas;
-        }
+    <!-- Fonts  -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
 
-        .header {
-            text-align: center;
-            color: #FFD180;
-            margin: 0 0 30px 0;
-            font-family: consolas;
-            font-size: 1.5em;
-        }
-
-        .button {
-            color: rgba(255, 255, 255, 0.87);
-            background-color: rgb(63, 81, 181);
-            border-radius: 3px;
-            text-transform: none;
-            font-weight: 300;
-            min-width: 0;
-            min-height: 24px;
-            line-height: 1.5;
-            margin: 12px;
-            margin-bottom: 0px;
-            font-size: inherit;
-            padding: 6px;
-            text-align: center;
-        }
-
-        .card {
-            position: absolute;
-            top: 100px;
-            left: calc(50% - 150px);
-            width: 325px;
-            background: #222;
-            border-radius: 10px;
-            z-index: 2;
-            padding: 20px;
-        }
-
-        hr {
-            display: block;
-            height: 1px;
-            border: 0;
-            border-top: 1px solid #FFD180;
-            margin: 1em 0;
-            padding: 0;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <title>Screepers Steamless Client</title>
 </head>
 
 <body style="background: black;">
+<div class="cardContainer">
     <div class="card">
-        <div class="header">Servers</div>
+        <h1 class="header1">Servers</h1>
         <div>
             <a href="http://localhost:8080/(http://screeps.com)/#!">
                 <div class="button">Official Server</div>
             </a>
         </div>
-        <hr>
+       <div class="cardChild">
+       <h2 class="header2">Community</h2>
+        <div>
+            <a href="http://localhost:8080/(http://server0.screepspl.us:21025)/#!">
+                <div class="button">ScreepsPlus</div>
+            </a>
+        </div>
         <div>
             <a href="http://localhost:8080/(http://screeps.cernode.com:21025)/#!">
                 <div class="button">Newbieland</div>
@@ -70,7 +33,7 @@
         </div>
         <div>
             <a href="http://localhost:8080/(http://jayseegames.com:21025)/#!">
-                <div class="button">Commieland</div>
+                <div class="button">Screeps Sandbox</div>
             </a>
         </div>
         <div>
@@ -78,7 +41,14 @@
                 <div class="button">Channel3</div>
             </a>
         </div>
-        <hr>
+        <div>
+            <a href="http://localhost:8080/(http://screeps.gohorse.dev:21025)/#!">
+                <div class="button">Go Horse Brazilian</div>
+            </a>
+        </div>
+        </div>
+        <div class="cardChild">
+        <h2 class="header2">Community Tournaments</h2>
         <div>
             <a href="http://localhost:8080/(http://botarena.screepspl.us:21025)/#!">
                 <div class="button">Botarena</div>
@@ -89,13 +59,19 @@
                 <div class="button">SWC</div>
             </a>
         </div>
-        <hr>
+        </div>
+       <div class="cardChild">
+       <h2 class="header2">Private</h2>
         <div>
             <a href="http://localhost:8080/(http://localhost:21025)/#!">
-                <div class="button">localhost</div>
+                <div class="button">Private server</div>
             </a>
         </div>
+        </div>
+
+        <p>Please note that some servers listed above are not actively hosted.</p>
     </div>
+</div>
 </body>
 
 </html>
