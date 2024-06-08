@@ -1,9 +1,17 @@
+:root {
+    --gold-color: #FFD180;
+    --blue-color: rgb(63, 81, 181);
+    --light-text: rgba(255, 255, 255, 0.87);
+}
+
 * {
     font-family: "Roboto", sans-serif;
     margin: unset;
 }
 
 body {
+    font-size: 16px;
+    background: black;
     color: white;
 }
 
@@ -12,26 +20,25 @@ a {
     display: flex;
     flex-direction: column;
     gap: 5px;
-
 }
 
-.header1 {
+h1 {
     text-align: center;
-    color: #FFD180;
+    color: var(--gold-color);
     font-size: 1.5em;
     font-weight: 800;
 }
 
-.header2 {
+h2 {
     font-weight: 700;
-    text-align: left;
-    color: #FFD180;
+    color: var(--gold-color);
     font-size: 1.3em;
 }
 
-.button {
-    color: rgba(255, 255, 255, 0.87);
-    background-color: rgb(63, 81, 181);
+button {
+    cursor: pointer;
+    color: var(--light-text);
+    background-color: var(--blue-color);
     border-radius: 3px;
     text-transform: none;
     font-weight: 400;
@@ -41,10 +48,11 @@ a {
     font-size: inherit;
     padding: 6px;
     text-align: center;
-    transition: all 0.2s;
+    transition: box-shadow 0.2s;
+    border: none;
 }
 
-.button:hover, .button:active {
+button:hover, button:active {
     box-shadow: inset rgb(0, 0, 0, 0.2) 0 0 0 10000px;
 }
 
@@ -67,7 +75,7 @@ a {
     flex-direction: column;
     gap: 20px;
     max-height: 90%;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .cardChild {
@@ -80,7 +88,13 @@ hr {
     display: block;
     height: 1px;
     border: 0;
-    border-top: 1px solid #FFD180;
+    border-top: 1px solid var(--gold-color);
     margin: 1em 0;
     padding: 0;
+}
+
+small {
+    text-align: center;
+    color: var(--light-text);
+    font-size: 0.8em;
 }
