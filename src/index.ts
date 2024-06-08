@@ -97,13 +97,15 @@ const extract = (url: string) => {
 koa.use(koaConditionalGet());
 koa.use(async (context, next) => {
 	const publicDir = 'public';
-	if (['/', '/index.html'].includes(context.path)) {
+	const indexFile = 'index.html';
+	const styleFile = 'style.css';
+	if (['/', `/${indexFile}`].includes(context.path)) {
 		context.type = 'html';
-		context.body = createReadStream(`${publicDir}/index.html`);
+		context.body = createReadStream(path.join(publicDir, indexFile));
 		return;
-	} else if (context.path === '/style.css') {
+	} else if (context.path === `/${styleFile}`) {
 		context.type = 'text/css';
-		context.body = createReadStream(publicDir + context.path);
+		context.body = createReadStream(path.join(publicDir, styleFile));
 		return;
 	}
 	return next();
