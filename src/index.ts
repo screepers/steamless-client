@@ -96,11 +96,16 @@ const extract = (url: string) => {
 // Serve client assets directly from steam package
 koa.use(koaConditionalGet());
 koa.use(async (context, next) => {
-  if (context.path === "/index.html") {
-    context.type = "html";
-    context.body = createReadStream(`src\\${context.path}`);
-    return;
-  }
+	const publicDir = 'public';
+  if (['/', '/index.html'].includes(context.path)) {
+    context.type = 'html';
+    context.body = createReadStream(`${publicDir}/index.html`);
+		return;
+  } else if (context.path === '/style.css') {
+		context.type = 'text/css';
+    context.body = createReadStream(publicDir + context.path);
+		return;
+	}
   return next();
 });
 koa.use(async(context, next) => {
@@ -314,13 +319,6 @@ server.on('upgrade', (req, socket, head) => {
 		socket.end();
 	}
 });
-
-console.log(
-	`🌎 Listening -- http://${host}:${port}/${
-		argv.backend ? '' : '(https://screeps.com)/'
-	}`
-);
-console.log(
-	`📜 Server list -- http://${host}:${port}/index.html
-	}`
-);
+const endpoint = argv.backend ? '' : '(https://screeps.com)/';
+console.log(`🌎 Listening -- http://${host}:${port}/${endpoint}`);
+console.log(`📜 Server list -- http://${host}:${port}/`);

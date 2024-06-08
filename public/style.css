@@ -1,0 +1,100 @@
+:root {
+    --gold-color: #FFD180;
+    --blue-color: rgb(63, 81, 181);
+    --light-text: rgba(255, 255, 255, 0.87);
+}
+
+* {
+    font-family: "Roboto", sans-serif;
+    margin: unset;
+}
+
+body {
+    font-size: 16px;
+    background: black;
+    color: white;
+}
+
+a {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+h1 {
+    text-align: center;
+    color: var(--gold-color);
+    font-size: 1.5em;
+    font-weight: 800;
+}
+
+h2 {
+    font-weight: 700;
+    color: var(--gold-color);
+    font-size: 1.3em;
+}
+
+button {
+    cursor: pointer;
+    color: var(--light-text);
+    background-color: var(--blue-color);
+    border-radius: 3px;
+    text-transform: none;
+    font-weight: 400;
+    min-width: 0;
+    min-height: 24px;
+    line-height: 1.5;
+    font-size: inherit;
+    padding: 6px;
+    text-align: center;
+    transition: box-shadow 0.2s;
+    border: none;
+}
+
+button:hover, button:active {
+    box-shadow: inset rgb(0, 0, 0, 0.2) 0 0 0 10000px;
+}
+
+.cardContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.card {
+    width: 325px;
+    background: #222;
+    border-radius: 10px;
+    z-index: 2;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-height: 90%;
+    overflow-y: auto;
+}
+
+.cardChild {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid var(--gold-color);
+    margin: 1em 0;
+    padding: 0;
+}
+
+small {
+    text-align: center;
+    color: var(--light-text);
+    font-size: 0.8em;
+}
