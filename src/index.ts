@@ -10,6 +10,7 @@ import fetch from 'node-fetch';
 import path from 'path';
 import { getGamePath } from "steam-game-path";
 import { Transform } from 'stream';
+import { fileURLToPath } from 'url';
 
 // Parse program arguments
 const argv = function() {
@@ -52,10 +53,10 @@ proxy.on('error', err => console.error(err));
 // Locate and read `package.nw`
 const [ data, stat ] = await async function() {
 	const pkgPath = argv.package ?? function() {
-    const steam = getGamePath(464350);
-      if (!steam || !steam.game) return undefined;
-      return path.join(steam.game.path, "package.nw");
-    }();
+		const steam = getGamePath(464350);
+		if (!steam || !steam.game) return undefined;
+		return path.join(steam.game.path, "package.nw");
+	}();
 	if (!pkgPath) {
 		console.log('Could not find `package.nw`. Please check `--package` argument');
 		process.exit(1);
@@ -93,20 +94,26 @@ const extract = (url: string) => {
 	}
 };
 
+// Get system path for public files dir
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDir = path.join(__dirname, '..', 'public');
+const indexFile = 'index.html';
+const publicFiles = [
+	{ file: indexFile, type: 'html' },
+	{ file: 'style.css', type: 'text/css' }
+];
+
 // Serve client assets directly from steam package
 koa.use(koaConditionalGet());
 koa.use(async (context, next) => {
-	const publicDir = 'public';
-	const indexFile = 'index.html';
-	const styleFile = 'style.css';
-	if (['/', `/${indexFile}`].includes(context.path)) {
-		context.type = 'html';
-		context.body = createReadStream(path.join(publicDir, indexFile));
-		return;
-	} else if (context.path === `/${styleFile}`) {
-		context.type = 'text/css';
-		context.body = createReadStream(path.join(publicDir, styleFile));
-		return;
+	const urlPath = context.path === '/' ? `/${indexFile}` : context.path;
+	for (const { file, type } of publicFiles) {
+		if (urlPath === `/${file}`) {
+			context.type = type;
+			context.body = createReadStream(path.join(publicDir, file));
+			return;
+		}
 	}
 	return next();
 });
