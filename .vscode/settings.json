@@ -3,7 +3,6 @@
 		"configFile": "./.vscode/.eslintrc.yaml"
 	},
 	"files.exclude": {
-		"dist": true,
 		"node_modules": true,
 	},
 	"files.insertFinalNewline": true,
