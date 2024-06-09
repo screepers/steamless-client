@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { ArgumentParser } from 'argparse';
-import { createReadStream, promises as fs } from 'fs';
+import { createReadStream, promises as fs, existsSync } from 'fs';
 import httpProxy from 'http-proxy';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
@@ -11,6 +11,11 @@ import path from 'path';
 import { getGamePath } from 'steam-game-path';
 import { Transform } from 'stream';
 import { fileURLToPath } from 'url';
+import os from 'os';
+import chalk from 'chalk';
+
+// Log welcome message
+console.log('🧩', chalk.yellowBright('Screepers Steamless Client'));
 
 // Parse program arguments
 const argv = (function () {
@@ -42,35 +47,59 @@ const argv = (function () {
     return parser.parse_args();
 })();
 
+// Error logging
+const error = (...args: unknown[]) => console.error('❌', chalk.bold.red('Error'), ...args);
+
 // Extract arguments
 const beautify = argv.beautify;
 
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
-proxy.on('error', (err) => console.error(err));
+proxy.on('error', (err) => error(err));
 
 // Use Steam to locate Screeps package
 const getPathFromSteam = () => {
     const steam = getGamePath(464350);
-    if (!steam?.game) {
-        console.error('Could not find Screeps in Steam library.');
-        return;
+    if (steam?.game) {
+        return path.join(steam.game.path, 'package.nw');
     }
-    return path.join(steam.game.path, 'package.nw');
+};
+
+// Backup method to locate Screeps package
+const getPathFromSystem = () => {
+    const screepsPath = ['Steam', 'steamapps', 'common', 'Screeps', 'package.nw'];
+    let gamePath: string | undefined;
+    switch (process.platform) {
+        case 'darwin':
+            gamePath = path.join(os.homedir(), 'Library', 'Application Support', ...screepsPath);
+            break;
+        case 'linux':
+            if (process.env.WSL_DISTRO_NAME) {
+                gamePath = path.join('/mnt/c/', 'Program Files (x86)', ...screepsPath);
+            } else {
+                gamePath = path.join(os.homedir(), '.steam', ...screepsPath);
+            }
+            break;
+        case 'win32':
+            gamePath = path.join('C:', 'Program Files (x86)', ...screepsPath);
+            break;
+    }
+    if (gamePath && existsSync(gamePath)) {
+        return gamePath;
+    }
+};
+
+const exitOnPackageError = () => {
+    error('Could not find the Screeps "package.nw".');
+    error('Use the "--package" argument to specify the path to the "package.nw" file.');
+    process.exit(1);
 };
 
 // Locate and read `package.nw`
 const [data, stat] = await (async function () {
-    const pkgPath = argv.package ?? getPathFromSteam();
-    if (!pkgPath) {
-        console.error("Could not find 'package.nw'. Use '--package' argument.");
-        process.exit(1);
-    }
-    return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch((err) => {
-        console.error(`Could not read package '${pkgPath}'.`);
-        console.error(err);
-        process.exit(1);
-    });
+    const pkgPath = argv.package ?? getPathFromSteam() ?? getPathFromSystem();
+    if (!pkgPath) exitOnPackageError();
+    return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch(exitOnPackageError);
 })();
 
 // Read package zip metadata
@@ -85,7 +114,7 @@ const koa = new Koa();
 const port = argv.port ?? 8080;
 const host = argv.host ?? 'localhost';
 const server = koa.listen(port, host);
-server.on('error', (err) => console.error(err));
+server.on('error', (err) => error(err));
 
 // Extract backend and endpoint from URL
 const extract = (url: string) => {
@@ -178,6 +207,7 @@ const indexFile = 'index.html';
 const publicFiles = [
     { file: indexFile, type: 'html' },
     { file: 'style.css', type: 'text/css' },
+    { file: 'favicon.png', type: 'image/png' },
 ];
 
 // Serve client assets directly from steam package
@@ -200,9 +230,10 @@ koa.use(async (context, next) => {
 koa.use(async (context, next) => {
     const info = extract(context.path);
     if (!info) {
-        console.error('Unknown URL', context.path, info);
+        error('Unknown URL', chalk.dim(context.path));
         return;
     }
+
     const path = info.endpoint === '/' ? 'index.html' : info.endpoint.substr(1);
     const file = zip.files[path];
     if (!file) {
@@ -286,19 +317,19 @@ koa.use(async (context, next) => {
 
                 // Look for server options payload in build information
                 for (const match of text.matchAll(/\boptions=\{/g)) {
-                    for (let ii = match.index!; ii < text.length; ++ii) {
-                        if (text.charAt(ii) === '}') {
+                    for (let i = match.index!; i < text.length; ++i) {
+                        if (text.charAt(i) === '}') {
                             try {
-                                const payload = text.substring(match.index!, ii + 1);
+                                const payload = text.substring(match.index!, i + 1);
                                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                 const holder = new Function(payload);
                                 if (payload.includes('apiUrl')) {
                                     // Inject `host`, `port`, and `official`
-                                    text = `${text.substr(0, ii)},
+                                    text = `${text.substr(0, i)},
                                         host: ${JSON.stringify(backend.hostname)},
                                         port: ${backend.port || '80'},
                                         official: ${official},
-                                    } ${text.substr(ii + 1)}`;
+                                    } ${text.substr(i + 1)}`;
                                 }
                                 break;
                             } catch (err) {}
@@ -384,13 +415,11 @@ server.on('upgrade', (req, socket, head) => {
         proxy.ws(req, socket, head, {
             target: argv.internal_backend ?? info.backend,
         });
-        socket.on('error', (err) => console.error(err));
+        socket.on('error', (err) => error(err));
     } else {
         socket.end();
     }
 });
 
 // Log server information
-const endpoint = argv.backend ? '' : '(https://screeps.com)/';
-console.log(`🌎 Listening -- http://${host}:${port}/${endpoint}`);
-console.log(`📜 Server list -- http://${host}:${port}/`);
+console.log('🌐', chalk.dim('Ready --'), chalk.white(`http://${host}:${port}/`));
