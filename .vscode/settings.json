@@ -1,10 +1,15 @@
 {
-	"eslint.options": {
-		"configFile": "./.vscode/.eslintrc.yaml"
-	},
 	"files.exclude": {
-		"node_modules": true,
+	  "node_modules": true
 	},
 	"files.insertFinalNewline": true,
 	"typescript.enablePromptUseWorkspaceTsdk": true,
-}
+	"[javascript]": {
+	  "editor.defaultFormatter": "esbenp.prettier-vscode",
+	  "editor.formatOnSave": true
+	},
+	"[typescript]": {
+	  "editor.defaultFormatter": "esbenp.prettier-vscode",
+	  "editor.formatOnSave": true
+	}
+  }
