@@ -254,19 +254,19 @@ koa.use(async (context, next) => {
             const socket = argv.backend ? '/socket/' : `/(${info.backend})/socket/`;
             // Screeps server config
             return `
-				var HISTORY_URL = '${history}';
-				var API_URL = '${api}';
-				var WEBSOCKET_URL = '${socket}';
-				var CONFIG = {
-					API_URL,
-					HISTORY_URL,
-					WEBSOCKET_URL,
-					PREFIX: '',
-					IS_PTR: false,
-					DEBUG: false,
-					XSOLLA_SANDBOX: false,
-				};
-			`;
+                var HISTORY_URL = '${history}';
+                var API_URL = '${api}';
+                var WEBSOCKET_URL = '${socket}';
+                var CONFIG = {
+                    API_URL,
+                    HISTORY_URL,
+                    WEBSOCKET_URL,
+                    PREFIX: '',
+                    IS_PTR: false,
+                    DEBUG: false,
+                    XSOLLA_SANDBOX: false,
+                };
+            `;
         } else if (context.path.endsWith('.js')) {
             let text = await file.async('text');
             if (path === 'build.min.js') {
@@ -295,10 +295,10 @@ koa.use(async (context, next) => {
                                 if (payload.includes('apiUrl')) {
                                     // Inject `host`, `port`, and `official`
                                     text = `${text.substr(0, ii)},
-										host: ${JSON.stringify(backend.hostname)},
-										port: ${backend.port || '80'},
-										official: ${official},
-									} ${text.substr(ii + 1)}`;
+                                        host: ${JSON.stringify(backend.hostname)},
+                                        port: ${backend.port || '80'},
+                                        official: ${official},
+                                    } ${text.substr(ii + 1)}`;
                                 }
                                 break;
                             } catch (err) {}
