@@ -1,52 +1,54 @@
 {
-  "name": "screepers-steamless-client",
-  "description": "A browser client for Screeps",
-  "type": "module",
-  "version": "1.8.0",
-  "bin": "dist/index.js",
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc -w",
-    "format": "prettier --write .",
-    "lint": "eslint $(git ls-files '*.ts')",
-    "prepare": "tsc",
-    "prepublish": "tsc"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/screepers/steamless-client"
-  },
-  "author": "laverdet",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/screepers/steamless-client/issues"
-  },
-  "homepage": "https://github.com/screepers/steamless-client#readme",
-  "devDependencies": {
-    "@laverdet/eslint-config": "github:laverdet/eslint-config#a12fa0a782425b584992fc937eb0db43642b560a",
-    "@semantic-release/commit-analyzer": "^13.0.0",
-    "@semantic-release/github": "^10.0.6",
-    "@semantic-release/npm": "^12.0.1",
-    "@semantic-release/release-notes-generator": "^14.0.0",
-    "@types/argparse": "2.0.10",
-    "@types/http-proxy": "1.17.7",
-    "@types/js-beautify": "1.13.2",
-    "@types/koa": "2.13.4",
-    "@types/koa-conditional-get": "2.0.0",
-    "@types/node": "16.4.13",
-    "@types/node-fetch": "2.5.12",
-    "prettier": "^3.3.1",
-    "semantic-release": "^24.0.0",
-    "typescript": "4.3.5"
-  },
-  "dependencies": {
-    "argparse": "2.0.1",
-    "http-proxy": "1.18.1",
-    "js-beautify": "1.14.0",
-    "jszip": "3.7.1",
-    "koa": "2.13.1",
-    "koa-conditional-get": "3.0.0",
-    "node-fetch": "2.6.1",
-    "steam-game-path": "github:tiennou/steam-game-path#fix/macos-support-built"
-  }
+    "name": "screepers-steamless-client",
+    "description": "A browser client for Screeps",
+    "type": "module",
+    "version": "1.8.0",
+    "bin": "dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc -w",
+        "format": "prettier --write 'src/**/*.ts'",
+        "lint": "eslint src/**/*.ts",
+        "prepare": "tsc"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/screepers/steamless-client"
+    },
+    "author": "laverdet",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/screepers/steamless-client/issues"
+    },
+    "homepage": "https://github.com/screepers/steamless-client#readme",
+    "devDependencies": {
+        "@semantic-release/commit-analyzer": "^13.0.0",
+        "@semantic-release/github": "^10.0.6",
+        "@semantic-release/npm": "^12.0.1",
+        "@semantic-release/release-notes-generator": "^14.0.0",
+        "@types/argparse": "2.0.10",
+        "@types/http-proxy": "1.17.7",
+        "@types/js-beautify": "1.13.2",
+        "@types/koa": "2.13.4",
+        "@types/koa-conditional-get": "2.0.0",
+        "@types/node": "16.4.13",
+        "@types/node-fetch": "2.5.12",
+        "@typescript-eslint/eslint-plugin": "^6.18.0",
+        "@typescript-eslint/parser": "^6.18.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-prettier": "^5.1.2",
+        "prettier": "^3.3.1",
+        "semantic-release": "^24.0.0",
+        "typescript": "4.3.5"
+    },
+    "dependencies": {
+        "argparse": "2.0.1",
+        "http-proxy": "1.18.1",
+        "js-beautify": "1.14.0",
+        "jszip": "3.7.1",
+        "koa": "2.13.1",
+        "koa-conditional-get": "3.0.0",
+        "node-fetch": "2.6.1",
+        "steam-game-path": "github:tiennou/steam-game-path#fix/macos-support-built"
+    }
 }

@@ -259,7 +259,9 @@ addEventListener('message', event => {
                     } catch (err) {}
                 })();
                 const officialLike =
-                    version?.serverData?.features?.some((f: any) => f.name.toLowerCase() === 'official-like') ?? false;
+                    version?.serverData?.features?.some(
+                        (f: { name: string }) => f.name.toLowerCase() === 'official-like',
+                    ) ?? false;
                 const official = backend.hostname === 'screeps.com' || officialLike;
 
                 // Look for server options payload in build information
@@ -269,9 +271,7 @@ addEventListener('message', event => {
                             try {
                                 const payload = text.substring(match.index!, ii + 1);
                                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                                const holder =
-                                    // eslint-disable-next-line @typescript-eslint/no-implied-eval
-                                    new Function(payload);
+                                const holder = new Function(payload);
                                 if (payload.includes('apiUrl')) {
                                     // Inject `host`, `port`, and `official`
                                     text = `${text.substr(0, ii)},

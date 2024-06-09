@@ -1,15 +1,15 @@
 {
-	"files.exclude": {
-	  "node_modules": true
-	},
-	"files.insertFinalNewline": true,
-	"typescript.enablePromptUseWorkspaceTsdk": true,
-	"[javascript]": {
-	  "editor.defaultFormatter": "esbenp.prettier-vscode",
-	  "editor.formatOnSave": true
-	},
-	"[typescript]": {
-	  "editor.defaultFormatter": "esbenp.prettier-vscode",
-	  "editor.formatOnSave": true
-	}
+  "files.exclude": {
+    "node_modules": true
+  },
+  "files.insertFinalNewline": true,
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
   }
+}

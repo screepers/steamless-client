@@ -1,11 +1,11 @@
 :root {
-    --gold-color: #FFD180;
+    --gold-color: #ffd180;
     --blue-color: rgb(63, 81, 181);
     --light-text: rgba(255, 255, 255, 0.87);
 }
 
 * {
-    font-family: "Roboto", sans-serif;
+    font-family: 'Roboto', sans-serif;
     margin: unset;
 }
 
@@ -52,7 +52,8 @@ button {
     border: none;
 }
 
-button:hover, button:active {
+button:hover,
+button:active {
     box-shadow: inset rgb(0, 0, 0, 0.2) 0 0 0 10000px;
 }
 
