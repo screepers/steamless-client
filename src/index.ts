@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { ArgumentParser } from 'argparse';
-import { createReadStream, promises as fs, existsSync } from 'fs';
+import { createReadStream, existsSync, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
@@ -215,9 +215,13 @@ koa.use(koaConditionalGet());
 
 // Serve public files
 koa.use(async (context, next) => {
-    const urlPath = context.path === '/' ? `/${indexFile}` : context.path;
+    if (argv.backend) {
+        // Serve client assets directly from the backend server
+        return next();
+    }
+    const urlPath = context.path === '/' ? indexFile : context.path.substring(1);
     for (const { file, type } of publicFiles) {
-        if (urlPath === `/${file}`) {
+        if (urlPath === file) {
             context.type = type;
             context.body = createReadStream(path.join(publicDir, file));
             return;
@@ -234,8 +238,8 @@ koa.use(async (context, next) => {
         return;
     }
 
-    const path = info.endpoint === '/' ? 'index.html' : info.endpoint.substr(1);
-    const file = zip.files[path];
+    const urlPath = info.endpoint === '/' ? 'index.html' : info.endpoint.substring(1);
+    const file = zip.files[urlPath];
     if (!file) {
         return next();
     }
@@ -248,7 +252,7 @@ koa.use(async (context, next) => {
 
     // Rewrite various payloads
     context.body = await (async function () {
-        if (path === 'index.html') {
+        if (urlPath === 'index.html') {
             let body = await file.async('text');
             // Inject startup shim
             const header = '<title>Screeps</title>';
@@ -279,7 +283,7 @@ koa.use(async (context, next) => {
                 '<script>function onRecaptchaLoad(){}</script>',
             );
             return body;
-        } else if (path === 'config.js') {
+        } else if (urlPath === 'config.js') {
             const history = argv.backend ? '/room-history/' : `/(${info.backend})/room-history/`;
             const api = argv.backend ? '/api/' : `/(${info.backend})/api/`;
             const socket = argv.backend ? '/socket/' : `/(${info.backend})/socket/`;
@@ -300,7 +304,7 @@ koa.use(async (context, next) => {
             `;
         } else if (context.path.endsWith('.js')) {
             let text = await file.async('text');
-            if (path === 'build.min.js') {
+            if (urlPath === 'build.min.js') {
                 // Load backend info from underlying server
                 const backend = new URL(info.backend);
                 const version = await (async function () {
@@ -325,11 +329,11 @@ koa.use(async (context, next) => {
                                 const holder = new Function(payload);
                                 if (payload.includes('apiUrl')) {
                                     // Inject `host`, `port`, and `official`
-                                    text = `${text.substr(0, i)},
+                                    text = `${text.substring(0, i)},
                                         host: ${JSON.stringify(backend.hostname)},
                                         port: ${backend.port || '80'},
                                         official: ${official},
-                                    } ${text.substr(i + 1)}`;
+                                    } ${text.substring(i + 1)}`;
                                 }
                                 break;
                             } catch (err) {}
@@ -376,7 +380,7 @@ koa.use(async (context, next) => {
             '.ttf': 'font/ttf',
             '.woff': 'font/woff',
             '.woff2': 'font/woff2',
-        }[/\.[^.]+$/.exec(path.toLowerCase())?.[0] ?? '.html']!,
+        }[/\.[^.]+$/.exec(urlPath.toLowerCase())?.[0] ?? '.html']!,
     );
 
     // We can safely cache explicitly-versioned resources forever
