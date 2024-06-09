@@ -425,5 +425,11 @@ server.on('upgrade', (req, socket, head) => {
     }
 });
 
+// Clean up on exit
+const cleanup = () => process.exit(1);
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
+process.on('exit', () => server.close());
+
 // Log server information
 console.log('🌐', chalk.dim('Ready --'), chalk.white(`http://${host}:${port}/`));
