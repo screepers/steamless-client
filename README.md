@@ -17,20 +17,20 @@ If the `--backend` argument is used, this URL will directly proxy the backend se
 
 If not using the `--backend` argument, you can use the format `http://localhost:8080/(SERVER_ADDRESS)/` to access different servers. Note that you can only log in to one server at a time.
 
--   For the official server: http://localhost:8080/(https://screeps.com)/
+- For the official server: http://localhost:8080/(https://screeps.com)/
 
--   For a local server on port 21025: http://localhost:8080/(http://localhost:21025)/
+- For a local server on port 21025: http://localhost:8080/(http://localhost:21025)/
 
 Steam OpenId support is required on your local server. Enable it with [screepsmod-auth](https://github.com/ScreepsMods/screepsmod-auth). For [xxscreeps](https://github.com/laverdet/xxscreeps/) servers, it's enabled by default.
 
 ### Command Line Arguments
 
--   `--backend`: Specifies the backend URL. If provided, the entire URL is used as the endpoint.
--   `--internal_backend`: Specifies the internal backend URL. If provided, this URL is used to reference the internal endpoint.
--   `--package`: Specifies the path to the Screeps client package.nw file. Only needed if the path isn't automatically detected.
--   `--host`: Changes the host address. (default: `localhost`)
--   `--port`: Changes the port. (default: `8080`)
--   `--beautify`: Formats .js files loaded in the client for debugging.
+- `--backend`: Specifies the backend URL. If provided, the entire URL is used as the endpoint.
+- `--internal_backend`: Specifies the internal backend URL. If provided, this URL is used to reference the internal endpoint.
+- `--package`: Specifies the path to the Screeps client package.nw file. Only needed if the path isn't automatically detected.
+- `--host`: Changes the host address. (default: `localhost`)
+- `--port`: Changes the port. (default: `8080`)
+- `--beautify`: Formats .js files loaded in the client for debugging.
 
 ### Examples
 
@@ -67,6 +67,16 @@ services:
 # .env
 SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/package.nw"
 ```
+
+### Development Scripts
+
+This project includes several scripts for development purposes:
+
+- `build`: Compiles the TypeScript files in your project. Run this script with `npm run build`.
+- `dev`: Compiles the TypeScript files and watches for changes. Run this script with `npm run dev`.
+- `format`: Formats the TypeScript files in the `src` directory using Prettier. Run this script with `npm run format`.
+- `lint`: Lints the TypeScript files in the `src` directory using ESLint. Run this script with `npm run lint`.
+- `prepare`: Compiles the TypeScript files in your project. This script is automatically run before the package is packed or published, and when installing git dependencies. Run this script with `npm run prepare`.
 
 ### Tips
 
