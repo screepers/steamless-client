@@ -67,25 +67,18 @@ const getPathFromSteam = () => {
 
 // Backup method to locate Screeps package
 const getPathFromSystem = () => {
-    const screepsPath = ['Steam', 'steamapps', 'common', 'Screeps', 'package.nw'];
-    let gamePath: string | undefined;
+    const screepsPath = ['steamapps', 'common', 'Screeps', 'package.nw'];
+    const windowsPath = ['Program Files (x86)', 'Steam', ...screepsPath];
     switch (process.platform) {
-        case 'darwin':
-            gamePath = path.join(os.homedir(), 'Library', 'Application Support', ...screepsPath);
-            break;
+        case 'darwin': // macOS
+            return path.join(os.homedir(), 'Library', 'Application Support', 'Steam', ...screepsPath);
         case 'linux':
             if (process.env.WSL_DISTRO_NAME) {
-                gamePath = path.join('/mnt/c/', 'Program Files (x86)', ...screepsPath);
-            } else {
-                gamePath = path.join(os.homedir(), '.steam', ...screepsPath);
+                return path.join('/mnt/c/', ...windowsPath);
             }
-            break;
+            return path.join(os.homedir(), '.steam', 'steam', ...screepsPath);
         case 'win32':
-            gamePath = path.join('C:', 'Program Files (x86)', ...screepsPath);
-            break;
-    }
-    if (gamePath && existsSync(gamePath)) {
-        return gamePath;
+            return path.join('C:', ...windowsPath);
     }
 };
 
@@ -98,7 +91,7 @@ const exitOnPackageError = () => {
 // Locate and read `package.nw`
 const [data, stat] = await (async function () {
     const pkgPath = argv.package ?? getPathFromSteam() ?? getPathFromSystem();
-    if (!pkgPath) exitOnPackageError();
+    if (!pkgPath || !existsSync(pkgPath)) exitOnPackageError();
     return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch(exitOnPackageError);
 })();
 
@@ -215,10 +208,9 @@ koa.use(koaConditionalGet());
 
 // Serve public files
 koa.use(async (context, next) => {
-    if (argv.backend) {
-        // Serve client assets directly from the backend server
-        return next();
-    }
+    // Skip if backend is specified
+    if (argv.backend) return next();
+
     const urlPath = context.path === '/' ? indexFile : context.path.substring(1);
     for (const { file, type } of publicFiles) {
         if (urlPath === file) {
