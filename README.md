@@ -72,11 +72,11 @@ SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/pa
 
 This project includes several scripts for development purposes:
 
-- `build`: Compiles the TypeScript files in your project. Run this script with `npm run build`.
-- `dev`: Compiles the TypeScript files and watches for changes. Run this script with `npm run dev`.
-- `format`: Formats the TypeScript files in the `src` directory using Prettier. Run this script with `npm run format`.
-- `lint`: Lints the TypeScript files in the `src` directory using ESLint. Run this script with `npm run lint`.
-- `prepare`: Compiles the TypeScript files in your project. This script is automatically run before the package is packed or published, and when installing git dependencies. Run this script with `npm run prepare`.
+- `build`: Compiles to `dist`. Run this script with `npm run build`.
+- `dev`: Compiles to `dist` and watches for changes. Run this script with `npm run dev`.
+- `format`: Formats the `src` directory using Prettier. Run this script with `npm run format`.
+- `lint`: Lints the `src` directory using ESLint. Run this script with `npm run lint`.
+- `prepare`: Compiles to `dist`. This script is automatically run before the package is packed or published, and when installing git dependencies. Run this script with `npm run prepare`.
 
 ### Tips
 
