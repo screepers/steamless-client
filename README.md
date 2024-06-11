@@ -53,14 +53,14 @@ Example usage with Jomik's [screeps-server](https://github.com/Jomik/screeps-ser
 # docker-compose.yml
 version: '3'
 services:
-    client:
-        image: node:16
-        command: sh -c 'npx screepers-steamless-client --package /screeps.nw --host 0.0.0.0 --internal_backend http://screeps:21025 --backend http://localhost:21025'
-        volumes:
-            - ${SCREEPS_NW_PATH:?"Missing screeps nw file"}:/screeps.nw
-        ports:
-            - 8080:8080
-        restart: unless-stopped
+  client:
+    image: node:16
+    command: sh -c 'npx screepers-steamless-client --package /screeps.nw --host 0.0.0.0 --internal_backend http://screeps:21025 --backend http://localhost:21025'
+    volumes:
+      - ${SCREEPS_NW_PATH:?"Missing screeps nw file"}:/screeps.nw
+    ports:
+      - 8080:8080
+    restart: unless-stopped
 ```
 
 ```bash
