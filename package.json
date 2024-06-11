@@ -7,7 +7,7 @@
     "scripts": {
         "build": "tsc",
         "dev": "tsc -w",
-        "format": "prettier --write '{src,public}/**/*.ts'",
+        "format": "prettier --write 'src/**/*.ts'",
         "lint": "eslint src/**/*.ts",
         "prepare": "tsc"
     },
