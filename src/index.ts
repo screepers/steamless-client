@@ -385,22 +385,24 @@ koa.use(async (context, next) => {
 koa.use(async (context, next) => {
     if (context.header.upgrade) {
         context.respond = false;
-    } else {
-        const info = extract(context.url);
-        if (info) {
-            context.respond = false;
-            context.req.url = info.endpoint;
-            if (info.endpoint.startsWith('/api/auth')) {
-                const returnUrl = encodeURIComponent(info.backend);
-                context.req.url = `${info.endpoint}${info.endpoint.includes('?') ? '&' : '?'}returnUrl=${returnUrl}`;
-            }
-            proxy.web(context.req, context.res, {
-                target: argv.internal_backend ?? info.backend,
-            });
-            return;
-        }
-        return next();
+        return;
     }
+
+    const info = extract(context.url);
+    if (info) {
+        context.respond = false;
+        context.req.url = info.endpoint;
+        if (info.endpoint.startsWith('/api/auth')) {
+            const returnUrl = encodeURIComponent(info.backend);
+            const separator = info.endpoint.endsWith('?') ? '' : info.endpoint.includes('?') ? '&' : '?';
+            context.req.url = `${info.endpoint}${separator}returnUrl=${returnUrl}`;
+        }
+        proxy.web(context.req, context.res, {
+            target: argv.internal_backend ?? info.backend,
+        });
+        return;
+    }
+    return next();
 });
 
 // Proxy WebSocket requests
