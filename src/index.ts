@@ -200,6 +200,7 @@ const indexFile = 'index.html';
 const publicFiles = [
     { file: indexFile, type: 'html' },
     { file: 'style.css', type: 'text/css' },
+    { file: 'client.js', type: 'text/javascript' },
     { file: 'favicon.png', type: 'image/png' },
 ];
 
@@ -221,6 +222,23 @@ koa.use(async (context, next) => {
     }
     return next();
 });
+
+// Inspect Screeps client package (may be useful for debugging)
+const inspectScreepsClientPackage = async () => {
+    const paths = Object.keys(zip.files).reduce((acc: Record<string, any>, path) => {
+        const [folder, ...file] = path.split('/');
+        if (file.length) {
+            acc[folder] = acc[folder] ?? [];
+            acc[folder].push([folder, file.join('/')].join('/'));
+        } else {
+            acc['/'] = acc['/'] ?? [];
+            acc['/'].push(folder);
+        }
+        return acc;
+    }, {});
+    await fs.writeFile('zip-files.json', JSON.stringify(paths, null, 2));
+};
+inspectScreepsClientPackage();
 
 // Serve client assets
 koa.use(async (context, next) => {

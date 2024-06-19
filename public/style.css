@@ -15,13 +15,6 @@ body {
     color: white;
 }
 
-a {
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
 h1 {
     text-align: center;
     color: var(--gold-color);
@@ -57,7 +50,7 @@ button:active {
     box-shadow: inset rgb(0, 0, 0, 0.2) 0 0 0 10000px;
 }
 
-.cardContainer {
+main {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -79,10 +72,45 @@ button:active {
     overflow-y: auto;
 }
 
-.cardChild {
+.card-section {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.card-section a {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.screeps-logo {
+    width: 100%;
+    display: flex;
+    justify-content: end;
+    padding: 5px 0;
+}
+
+.screeps-logo img {
+    width: 310px;
+}
+
+.server {
+    display: flex;
+    align-items: center;
+}
+
+.server a {
+    flex: 1;
+}
+
+.status-circle {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-left: 10px;
 }
 
 hr {
@@ -92,10 +120,4 @@ hr {
     border-top: 1px solid var(--gold-color);
     margin: 1em 0;
     padding: 0;
-}
-
-small {
-    text-align: center;
-    color: var(--light-text);
-    font-size: 0.8em;
 }
