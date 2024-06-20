@@ -1,0 +1,47 @@
+[
+    {
+        "type": "official",
+        "name": "Official Server",
+        "url": "https://screeps.com"
+    },
+    {
+        "type": "community",
+        "name": "ScreepsPlus",
+        "url": "http://server0.screepspl.us:21025"
+    },
+    {
+        "type": "community",
+        "name": "Newbie Land",
+        "url": "http://screeps.cernode.com:21025"
+    },
+    {
+        "type": "community",
+        "name": "Screeps Sandbox",
+        "url": "http://jayseegames.com:21025"
+    },
+    {
+        "type": "community",
+        "name": "Channel3",
+        "url": "http://screeps.ch3.network:21025"
+    },
+    {
+        "type": "community",
+        "name": "Go Horse Brazilian",
+        "url": "http://screeps.gohorse.dev:21025"
+    },
+    {
+        "type": "events",
+        "name": "Botarena",
+        "url": "http://botarena.screepspl.us:21025"
+    },
+    {
+        "type": "events",
+        "name": "SWC",
+        "url": "http://swc.screepspl.us:21025"
+    },
+    {
+        "type": "private",
+        "name": "Local Server",
+        "url": "http://localhost:21025"
+    }
+]

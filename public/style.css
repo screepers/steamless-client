@@ -65,6 +65,7 @@ main {
     border-radius: 10px;
     z-index: 2;
     padding: 20px;
+    padding-right: 10px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -88,7 +89,7 @@ main {
 .screeps-logo {
     width: 100%;
     display: flex;
-    justify-content: end;
+    justify-content: center;
     padding: 5px 0;
 }
 
@@ -107,6 +108,7 @@ main {
 
 .status-circle {
     display: inline-block;
+    box-sizing: border-box;
     width: 10px;
     height: 10px;
     border-radius: 50%;

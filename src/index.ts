@@ -1,16 +1,24 @@
 #!/usr/bin/env node
+
+/**
+ * @file Screepers Steamless Client
+ * @description This script serves the Screeps client from the local filesystem and proxies API requests to the Screeps server.
+ */
+
 import { ArgumentParser } from 'argparse';
 import { createReadStream, existsSync, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
 import Koa from 'koa';
+import serve from 'koa-static';
+import views from 'koa-views';
 import koaConditionalGet from 'koa-conditional-get';
 import fetch from 'node-fetch';
 import path from 'path';
 import { getGamePath } from 'steam-game-path';
 import { Transform } from 'stream';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, URL } from 'url';
 import os from 'os';
 import chalk from 'chalk';
 
@@ -41,6 +49,10 @@ const argv = (function () {
         type: 'str',
     });
     parser.add_argument('--internal_backend', {
+        nargs: '?',
+        type: 'str',
+    });
+    parser.add_argument('--server_list', {
         nargs: '?',
         type: 'str',
     });
@@ -195,31 +207,88 @@ const generateScript = (backend: string) => {
 // Get system path for public files dir
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const publicDir = path.join(__dirname, '..', 'public');
-const indexFile = 'index.html';
-const publicFiles = [
-    { file: indexFile, type: 'html' },
-    { file: 'style.css', type: 'text/css' },
-    { file: 'client.js', type: 'text/javascript' },
-    { file: 'favicon.png', type: 'image/png' },
-];
+const rootDir = path.join(__dirname, '..');
+const indexFile = 'index.ejs';
+
+interface Server {
+    type: string;
+    name: string;
+    url: string;
+    api: string;
+}
+
+const getServerListConfig = async () => {
+    let serverConfigPath = argv.server_list;
+    if (!serverConfigPath) {
+        serverConfigPath = path.join(__dirname, 'server_list.json');
+        if (!existsSync(serverConfigPath)) {
+            serverConfigPath = path.join(__dirname, '../server_list.json');
+        }
+    }
+
+    const serverConfig: Server[] = JSON.parse(await fs.readFile(serverConfigPath, 'utf-8'));
+    const serverTypes = Array.from(new Set(serverConfig.map((server) => server.type)));
+    const serverList = serverTypes.map((type) => {
+        const serversOfType = serverConfig
+            .filter((server) => server.type === type)
+            .map((server) => {
+                const { origin, pathname } = new URL(server.url);
+                const url = `http://${host}:${port}/(${origin})${pathname}`;
+                const api = `http://${host}:${port}/(${origin})${pathname}/api/version`;
+                return { ...server, url, api };
+            });
+
+        return {
+            name: type.charAt(0).toUpperCase() + type.slice(1),
+            logo: type === 'official' ? serversOfType[0].url + 'logotype.svg' : undefined,
+            servers: serversOfType,
+        };
+    });
+
+    return serverList;
+};
+
+// Setup views, adding .ejs extension to template files
+koa.use(views(path.join(__dirname, '../views'), { extension: 'ejs' }));
 
 // Serve client assets directly from steam package
 koa.use(koaConditionalGet());
 
-// Serve public files
+// Render the index.ejs file and pass the serverList variable
 koa.use(async (context, next) => {
-    // Skip if backend is specified
-    if (argv.backend) return next();
+    if (argv.backend) return next(); // Skip if backend is specified
 
-    const urlPath = context.path === '/' ? indexFile : context.path.substring(1);
-    for (const { file, type } of publicFiles) {
-        if (urlPath === file) {
-            context.type = type;
-            context.body = createReadStream(path.join(publicDir, file));
+    if (['/', 'index.html'].includes(context.path)) {
+        const serverList = await getServerListConfig();
+        if (serverList.length) {
+            await context.render(indexFile, { serverList });
             return;
         }
     }
+
+    return next();
+});
+
+// Public files to serve
+const publicFiles = [
+    { file: 'public/favicon.png', type: 'image/png' },
+    { file: 'public/style.css', type: 'text/css' },
+    { file: 'dist/serverList.js', type: 'text/javascript' },
+];
+
+// Serve public files
+koa.use(async (context, next) => {
+    if (argv.backend) return next(); // Skip if backend is specified
+
+    const urlPath = context.path.substring(1);
+    for (const { file, type } of publicFiles) {
+        if (urlPath === file) {
+            context.type = type;
+            context.body = createReadStream(path.join(rootDir, file));
+            return;
+        }
+    }
+
     return next();
 });
 
@@ -236,9 +305,9 @@ const inspectScreepsClientPackage = async () => {
         }
         return acc;
     }, {});
-    await fs.writeFile('zip-files.json', JSON.stringify(paths, null, 2));
+    await fs.writeFile('client_files.json', JSON.stringify(paths, null, 2));
 };
-inspectScreepsClientPackage();
+// inspectScreepsClientPackage();
 
 // Serve client assets
 koa.use(async (context, next) => {
