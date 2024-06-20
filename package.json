@@ -1,12 +1,14 @@
 {
   "name": "screepers-steamless-client",
+  "description": "A browser client for Screeps",
   "type": "module",
   "version": "1.8.0",
   "bin": "dist/index.js",
   "scripts": {
-    "eslint": "eslint $(git ls-files '*.ts' '*.tsx')",
-    "prepare": "tsc",
-    "watch": "tsc -w"
+    "build": "tsc",
+    "dev": "tsc -w",
+    "lint": "eslint $(git ls-files '*.ts')",
+    "prepare": "tsc"
   },
   "repository": {
     "type": "git",
@@ -20,6 +22,10 @@
   "homepage": "https://github.com/screepers/steamless-client#readme",
   "devDependencies": {
     "@laverdet/eslint-config": "github:laverdet/eslint-config#a12fa0a782425b584992fc937eb0db43642b560a",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/github": "^10.0.6",
+    "@semantic-release/npm": "^12.0.1",
+    "@semantic-release/release-notes-generator": "^14.0.0",
     "@types/argparse": "2.0.10",
     "@types/http-proxy": "1.17.7",
     "@types/js-beautify": "1.13.2",
@@ -27,6 +33,7 @@
     "@types/koa-conditional-get": "2.0.0",
     "@types/node": "16.4.13",
     "@types/node-fetch": "2.5.12",
+    "semantic-release": "^24.0.0",
     "typescript": "4.3.5"
   },
   "dependencies": {
