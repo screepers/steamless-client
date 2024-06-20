@@ -248,7 +248,7 @@ const getServerListConfig = async () => {
     return serverList;
 };
 
-// Setup views, adding .ejs extension to template files
+// Setup views for rendering ejs files
 koa.use(views(path.join(__dirname, '../views'), { extension: 'ejs' }));
 
 // Serve client assets directly from steam package
