@@ -1,18 +1,18 @@
 {
-	"compilerOptions": {
-		"baseUrl": "src",
-		"outDir": "dist",
-		"rootDir": "src",
-		"allowSyntheticDefaultImports": true,
-		"declaration": false,
-		"lib": [ "esnext", "dom" ],
-		"module": "esnext",
-		"moduleResolution": "node",
-		"noImplicitOverride": true,
-		"sourceMap": false,
-		"strict": true,
-		"target": "esnext",
-		"skipLibCheck": true
-	},
-	"include": [ "src" ]
+  "compilerOptions": {
+    "baseUrl": "src",
+    "outDir": "dist",
+    "rootDir": "src",
+    "allowSyntheticDefaultImports": true,
+    "declaration": false,
+    "lib": [ "esnext", "dom" ],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noImplicitOverride": true,
+    "sourceMap": false,
+    "strict": true,
+    "target": "esnext",
+    "skipLibCheck": true
+  },
+  "include": [ "src" ]
 }
