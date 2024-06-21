@@ -14,17 +14,17 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v3
-      - name: Setup Node.js
+      - name: Setup node
         uses: actions/setup-node@v3
         with:
           node-version: 20
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
-      - name: Build
-        run: npm run build
-      - name: Release
+      - name: Install semantic-release
+        run: npm i semantic-release @semantic-release/commit-analyzer @semantic-release/github @semantic-release/npm @semantic-release/release-notes-generator
+      - name: Publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
