@@ -2,9 +2,7 @@
 
 ### Overview
 
-The Screepers Steamless Client is a web proxy enabling you to run Screeps in your browser. It's made for players who've bought [Screeps: World](https://store.steampowered.com/app/464350/Screeps/) via Steam. The official Screeps client, built on an older NW.js version, doesn't support many macOS devices. This client uses the Screeps files installed with Steam, allowing you to play on official and private servers across macOS, Linux, and Windows.
-
-This client leverages the Screeps files installed via Steam to operate. It reads and interprets these files, translating them into a format that can be run in your web browser. This allows you to play on both official and private servers across various operating systems, including macOS, Linux, and Windows.
+The Screepers Steamless Client is a web proxy that allows you to run [Screeps: World](https://store.steampowered.com/app/464350/Screeps/), a game purchased via Steam, directly in your browser. It overcomes compatibility issues with the official Screeps client on many macOS devices. This client uses the Screeps files installed with Steam and enables gameplay on official and private servers across macOS, Linux, and Windows using the browser of your choice.
 
 ### Installation & Usage
 
