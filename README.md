@@ -2,7 +2,9 @@
 
 ### Overview
 
-The Screepers Steamless Client is a package that allows you to run the [Screeps](https://screeps.com/) game client in your browser. It's designed for users who have purchased [Screeps](https://store.steampowered.com/app/464350/Screeps/) on Steam. The official Screeps client, which uses an older version of [NW.js](https://nwjs.io/), lacks support for many macOS devices. This client serves the Screeps files installed via Steam, enabling you to run Screeps in your browser on macOS, Linux, and Windows.
+The Screepers Steamless Client is a web proxy enabling you to run Screeps in your browser. It's made for players who've bought [Screeps: World](https://store.steampowered.com/app/464350/Screeps/) via Steam. The official Screeps client, built on an older NW.js version, doesn't support many macOS devices. This client uses the Screeps files installed with Steam, allowing you to play on official and private servers across macOS, Linux, and Windows.
+
+This client leverages the Screeps files installed via Steam to operate. It reads and interprets these files, translating them into a format that can be run in your web browser. This allows you to play on both official and private servers across various operating systems, including macOS, Linux, and Windows.
 
 ### Installation & Usage
 
@@ -30,29 +32,38 @@ Steam OpenId support is required on your local server. Enable it with [screepsmo
 - `--package`: Specifies the path to the Screeps client package.nw file. Only needed if the path isn't automatically detected.
 - `--host`: Changes the host address. (default: `localhost`)
 - `--port`: Changes the port. (default: `8080`)
+- `--server_list`: Specifies the path to a custom server list JSON file to use for the Server List page.
 - `--beautify`: Formats .js files loaded in the client for debugging.
 
 ### Examples
 
-Set the path to the Screeps client package.nw file (only if not automatically detected):
+#### Package path
+
+Specify the path to the Screeps client package.nw if not automatically detected:
 
 ```sh
 npx screepers-steamless-client --package ~/Screeps/package.nw
 ```
 
-Proxy a server directly (server list disabled):
+#### Backend proxy
+
+Proxy a server directly (disables the server list page):
 
 ```sh
 npx screepers-steamless-client --backend https://screeps.com
 npx screepers-steamless-client --backend http://localhost:21025
 ```
 
-Example usage with Jomik's [screeps-server](https://github.com/Jomik/screeps-server).
+#### Docker compose
+
+Example usage with Jomik's [screeps-server](https://github.com/Jomik/screeps-server). You can copy the `client` service into your docker-compose.yml file (into the `services` section and before `volumes` section)
 
 ```yaml
 # docker-compose.yml
-version: '3'
+version: "3"
 services:
+  # ... existing services ...
+
   client:
     image: node:16
     command: sh -c 'npx screepers-steamless-client --package /screeps.nw --host 0.0.0.0 --internal_backend http://screeps:21025 --backend http://localhost:21025'
@@ -66,6 +77,34 @@ services:
 ```bash
 # .env
 SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/package.nw"
+```
+
+#### Custom server list
+
+Specify the path to your custom server list JSON file:
+
+```sh
+npx screepers-steamless-client --server_list ./custom_server_list.json
+```
+
+The custom server list JSON file should follow the same format as the provided [server_list.json](server_list.json). Each object in the JSON file should include a `type`, `name`, and `url`:
+* `type`: This is used to organize servers into sections.
+* `name`: This is the name of the server.
+* `url`: This is used to create a link to the server.
+
+```json
+[
+  {
+    "type": "official",
+    "name": "Official Server",
+    "url": "https://screeps.com"
+  },
+  {
+    "type": "private",
+    "name": "Local Server",
+    "url": "http://localhost:21025"
+  }
+]
 ```
 
 ### Development Scripts
