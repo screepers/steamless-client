@@ -11,6 +11,7 @@
         "assets": [
           "dist/**",
           "public/**",
+          "settings/**",
           "views/**"
         ]
       }
