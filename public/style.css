@@ -1,8 +1,11 @@
 :root {
-    color-scheme: dark;
+    color-scheme: dark only;
     --gold-color: #ffd180;
     --blue-color: rgb(63, 81, 181);
     --light-text: rgba(255, 255, 255, 0.87);
+    --size-xs: 0.5rem;
+    --size-sm: 0.75rem;
+    --size-md: 1rem;
 }
 
 * {
@@ -33,14 +36,10 @@ button {
     cursor: pointer;
     color: var(--light-text);
     background-color: var(--blue-color);
-    border-radius: 3px;
-    text-transform: none;
-    font-weight: 400;
-    min-width: 0;
-    min-height: 24px;
-    line-height: 1.5;
+    border-radius: 4px;
+    line-height: 1.25;
     font-size: inherit;
-    padding: 6px;
+    padding: var(--size-xs);
     text-align: center;
     transition: box-shadow 0.2s;
     border: none;
@@ -53,45 +52,47 @@ button:active {
 
 main {
     width: 100%;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
 }
 
 .card {
     width: 325px;
     background: #222;
-    border-radius: 10px;
-    z-index: 2;
-    padding: 20px;
-    padding-right: 10px;
+    border-radius: var(--size-xs);
+    margin: var(--size-sm);
+    padding: var(--size-md);
+    padding-right: var(--size-xs);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: var(--size-md);
     max-height: 90%;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
 }
 
 .card-section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--size-xs);
 }
 
 .card-section a {
     text-decoration: none;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: var(--size-xs);
 }
 
 .screeps-logo {
     width: 100%;
     display: flex;
     justify-content: center;
-    padding: 5px 0;
+    padding: var(--size-xs) 0;
 }
 
 .screeps-logo img {
@@ -104,23 +105,14 @@ main {
 }
 
 .server a {
-    flex: 1;
+    flex-grow: 1;
 }
 
 .status-circle {
-    display: inline-block;
-    box-sizing: border-box;
     width: 10px;
     height: 10px;
     border-radius: 50%;
     margin-left: 10px;
-}
-
-hr {
-    display: block;
-    height: 1px;
-    border: 0;
-    border-top: 1px solid var(--gold-color);
-    margin: 1em 0;
-    padding: 0;
+    display: inline-block;
+    box-sizing: border-box;
 }
