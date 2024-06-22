@@ -1,0 +1,37 @@
+<html>
+<head>
+    <title>Screepers Steamless Client</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+    <link rel="icon" href="/public/favicon.png" />
+    <link rel="stylesheet" href="/public/style.css" />
+</head>
+<body>
+    <main>
+        <div class="card">
+            <% // The serverList is passed in from the clientApp %>
+            <% serverList.forEach(section => { %>
+                <div class="card-section" data-section="<%= section.name %>">
+                    <% if (section.name.toLowerCase() === 'official') { %>
+                        <div class="screeps-logo">
+                            <img src="<%= section.logo %>" alt="Screeps Logo" />
+                        </div>
+                    <% } else { %>
+                        <h2><%= section.name %></h2>
+                    <% } %>
+                    <% section.servers.forEach(server => { %>
+                        <div class="server">
+                            <a href="<%= server.url %>">
+                                <button><%= server.name %></button>
+                            </a>
+                            <span class="status-circle" data-api="<%= server.api %>"></span>
+                        </div>
+                    <% }) %>
+                </div>
+            <% }) %>
+        </div>
+    </main>
+    <script src="/dist/serverStatus.js"></script>
+</body>
+</html>

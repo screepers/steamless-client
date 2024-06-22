@@ -1,7 +1,11 @@
 :root {
+    color-scheme: dark only;
     --gold-color: #ffd180;
     --blue-color: rgb(63, 81, 181);
     --light-text: rgba(255, 255, 255, 0.87);
+    --size-xs: 0.5em;
+    --size-sm: 0.75em;
+    --size-md: 1em;
 }
 
 * {
@@ -13,13 +17,6 @@ body {
     font-size: 16px;
     background: black;
     color: white;
-}
-
-a {
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
 }
 
 h1 {
@@ -39,14 +36,10 @@ button {
     cursor: pointer;
     color: var(--light-text);
     background-color: var(--blue-color);
-    border-radius: 3px;
-    text-transform: none;
-    font-weight: 400;
-    min-width: 0;
-    min-height: 24px;
-    line-height: 1.5;
+    border-radius: 4px;
+    line-height: 1.25;
     font-size: inherit;
-    padding: 6px;
+    padding: var(--size-xs);
     text-align: center;
     transition: box-shadow 0.2s;
     border: none;
@@ -54,48 +47,67 @@ button {
 
 button:hover,
 button:active {
-    box-shadow: inset rgb(0, 0, 0, 0.2) 0 0 0 10000px;
+    box-shadow: inset rgb(0, 0, 0, 0.2) 0 0 0 100px;
 }
 
-.cardContainer {
-    width: 100%;
+main {
+    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
 }
 
 .card {
-    width: 325px;
+    width: 320px;
     background: #222;
-    border-radius: 10px;
-    z-index: 2;
-    padding: 20px;
+    border-radius: var(--size-xs);
+    margin: var(--size-sm);
+    padding: var(--size-md);
+    padding-right: var(--size-xs);
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    max-height: 90%;
+    gap: var(--size-md);
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
 }
 
-.cardChild {
+.card-section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--size-xs);
 }
 
-hr {
-    display: block;
-    height: 1px;
-    border: 0;
-    border-top: 1px solid var(--gold-color);
-    margin: 1em 0;
-    padding: 0;
+.card-section a {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-xs);
 }
 
-small {
-    text-align: center;
-    color: var(--light-text);
-    font-size: 0.8em;
+.screeps-logo {
+    display: flex;
+    flex-grow: 1;
+    justify-content: center;
+    padding: var(--size-xs) 0;
+}
+
+.server {
+    display: flex;
+    align-items: center;
+}
+
+.server a {
+    flex-grow: 1;
+}
+
+.status-circle {
+    cursor: pointer;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-left: 10px;
+    display: inline-block;
+    box-sizing: border-box;
 }

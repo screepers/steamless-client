@@ -5,12 +5,13 @@ import httpProxy from 'http-proxy';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
 import Koa from 'koa';
+import views from 'koa-views';
 import koaConditionalGet from 'koa-conditional-get';
 import fetch from 'node-fetch';
 import path from 'path';
 import { getGamePath } from 'steam-game-path';
 import { Transform } from 'stream';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, URL } from 'url';
 import os from 'os';
 import chalk from 'chalk';
 
@@ -41,6 +42,10 @@ const argv = (function () {
         type: 'str',
     });
     parser.add_argument('--internal_backend', {
+        nargs: '?',
+        type: 'str',
+    });
+    parser.add_argument('--server_list', {
         nargs: '?',
         type: 'str',
     });
@@ -195,30 +200,93 @@ const generateScript = (backend: string) => {
 // Get system path for public files dir
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const publicDir = path.join(__dirname, '..', 'public');
-const indexFile = 'index.html';
-const publicFiles = [
-    { file: indexFile, type: 'html' },
-    { file: 'style.css', type: 'text/css' },
-    { file: 'favicon.png', type: 'image/png' },
-];
+const rootDir = path.join(__dirname, '..');
+const indexFile = 'index.ejs';
+
+interface Server {
+    type: string;
+    name: string;
+    url: string;
+    api: string;
+    subdomain?: string;
+}
+
+const getServerListConfig = async () => {
+    let serverListPath = argv.server_list;
+    if (!serverListPath) {
+        const serverListFile = 'server_list.json';
+        serverListPath = path.join(__dirname, `../settings/${serverListFile}`);
+        if (!existsSync(serverListPath)) {
+            serverListPath = path.join(__dirname, serverListFile);
+        }
+    }
+
+    const serverConfig: Server[] = JSON.parse(await fs.readFile(serverListPath, 'utf-8'));
+    const serverTypes = Array.from(new Set(serverConfig.map((server) => server.type)));
+    const serverList = serverTypes.map((type) => {
+        const serversOfType = serverConfig
+            .filter((server) => server.type === type)
+            .map((server) => {
+                const subdomain = host === 'localhost' && server.subdomain ? `${server.subdomain}.` : '';
+                let { origin, pathname } = new URL(server.url);
+                pathname = pathname.endsWith('/') ? pathname : `${pathname}/`;
+
+                const url = `http://${subdomain}${host}:${port}/(${origin})${pathname}`;
+                const api = `http://${host}:${port}/(${origin})${pathname}api/version`;
+                return { ...server, url, api };
+            });
+
+        return {
+            name: type.charAt(0).toUpperCase() + type.slice(1),
+            logo: type === 'official' ? serversOfType[0].url + 'logotype.svg' : undefined,
+            servers: serversOfType,
+        };
+    });
+
+    return serverList;
+};
+
+// Setup views for rendering ejs files
+koa.use(views(path.join(__dirname, '../views'), { extension: 'ejs' }));
 
 // Serve client assets directly from steam package
 koa.use(koaConditionalGet());
 
-// Serve public files
+// Render the index.ejs file and pass the serverList variable
 koa.use(async (context, next) => {
-    // Skip if backend is specified
-    if (argv.backend) return next();
+    if (argv.backend) return next(); // Skip if backend is specified
 
-    const urlPath = context.path === '/' ? indexFile : context.path.substring(1);
-    for (const { file, type } of publicFiles) {
-        if (urlPath === file) {
-            context.type = type;
-            context.body = createReadStream(path.join(publicDir, file));
+    if (['/', 'index.html'].includes(context.path)) {
+        const serverList = await getServerListConfig();
+        if (serverList.length) {
+            await context.render(indexFile, { serverList });
             return;
         }
     }
+
+    return next();
+});
+
+// Public files to serve
+const publicFiles = [
+    { file: 'public/favicon.png', type: 'image/png' },
+    { file: 'public/style.css', type: 'text/css' },
+    { file: 'dist/serverStatus.js', type: 'text/javascript' },
+];
+
+// Serve public files
+koa.use(async (context, next) => {
+    if (argv.backend) return next(); // Skip if backend is specified
+
+    const urlPath = context.path.substring(1);
+    for (const { file, type } of publicFiles) {
+        if (urlPath === file) {
+            context.type = type;
+            context.body = createReadStream(path.join(rootDir, file));
+            return;
+        }
+    }
+
     return next();
 });
 
