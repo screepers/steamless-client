@@ -3,16 +3,16 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-async function getSteamPathFromWinReg(): Promise<string> {
-    return new Promise((resolve, reject) => {
+async function getSteamPathFromWinReg(): Promise<string | null> {
+    return new Promise((resolve) => {
         const regKey = new Registry({
-            hive: Registry.HKCU,
+            hive: Registry.HKLM,
             key: '\\SOFTWARE\\WOW6432Node\\Valve\\Steam',
         });
 
         return regKey.get('InstallPath', (err, item) => {
             if (err) {
-                reject(err);
+                resolve(null);
             } else {
                 resolve(item.value);
             }
@@ -23,7 +23,7 @@ async function getSteamPathFromWinReg(): Promise<string> {
 async function getSteamPath() {
     switch (process.platform) {
         case 'linux': {
-            // WSL support (very basic, only checks for Steam in the default location)
+            // WSL support (very basic, checks for Steam in the default location)
             if (process.env.WSL_DISTRO_NAME) {
                 const steamPath = path.join('/mnt/c/', 'Program Files (x86)', 'Steam');
                 if (fs.existsSync(steamPath)) {
@@ -48,7 +48,12 @@ async function getSteamPath() {
 
         case 'win32': {
             // Windows, check registry for Steam path
-            const steamPath = await getSteamPathFromWinReg();
+            let steamPath = await getSteamPathFromWinReg();
+            if (steamPath && fs.existsSync(steamPath)) {
+                return steamPath;
+            }
+            // Fallback method (very basic, checks for Steam in the default location)
+            steamPath = path.join('C:', 'Program Files (x86)', 'Steam');
             if (fs.existsSync(steamPath)) {
                 return steamPath;
             }
