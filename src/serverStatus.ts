@@ -19,6 +19,7 @@
 
             elem.addEventListener('click', async function handleClick() {
                 elem.removeEventListener('click', handleClick);
+                elem.style.cursor = 'default';
 
                 setLoading(elem);
 

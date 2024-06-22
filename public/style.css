@@ -3,9 +3,9 @@
     --gold-color: #ffd180;
     --blue-color: rgb(63, 81, 181);
     --light-text: rgba(255, 255, 255, 0.87);
-    --size-xs: 0.5rem;
-    --size-sm: 0.75rem;
-    --size-md: 1rem;
+    --size-xs: 0.5em;
+    --size-sm: 0.75em;
+    --size-md: 1em;
 }
 
 * {
@@ -47,7 +47,7 @@ button {
 
 button:hover,
 button:active {
-    box-shadow: inset rgb(0, 0, 0, 0.2) 0 0 0 10000px;
+    box-shadow: inset rgb(0, 0, 0, 0.2) 0 0 0 100px;
 }
 
 main {
@@ -60,7 +60,7 @@ main {
 }
 
 .card {
-    width: 325px;
+    width: 320px;
     background: #222;
     border-radius: var(--size-xs);
     margin: var(--size-sm);
@@ -69,7 +69,6 @@ main {
     display: flex;
     flex-direction: column;
     gap: var(--size-md);
-    max-height: 90%;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-gutter: stable;
@@ -95,10 +94,6 @@ main {
     padding: var(--size-xs) 0;
 }
 
-.screeps-logo img {
-    width: 310px;
-}
-
 .server {
     display: flex;
     align-items: center;
@@ -109,6 +104,7 @@ main {
 }
 
 .status-circle {
+    cursor: pointer;
     width: 10px;
     height: 10px;
     border-radius: 50%;
