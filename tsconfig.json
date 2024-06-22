@@ -9,12 +9,12 @@
       "esnext",
       "dom"
     ],
-    "module": "esnext",
+    "module": "ESNext",
+    "target": "ESNext",
     "moduleResolution": "node",
     "noImplicitOverride": true,
     "sourceMap": false,
     "strict": true,
-    "target": "esnext",
     "skipLibCheck": true
   },
   "include": [

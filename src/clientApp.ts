@@ -9,11 +9,10 @@ import views from 'koa-views';
 import koaConditionalGet from 'koa-conditional-get';
 import fetch from 'node-fetch';
 import path from 'path';
-import { getGamePath } from 'steam-game-path';
 import { Transform } from 'stream';
 import { fileURLToPath, URL } from 'url';
-import os from 'os';
 import chalk from 'chalk';
+import { getScreepsPath } from './steamGamePath';
 
 // Log welcome message
 console.log('🧩', chalk.yellowBright('Screepers Steamless Client'));
@@ -62,31 +61,6 @@ const beautify = argv.beautify;
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
 proxy.on('error', (err) => error(err));
 
-// Use Steam to locate Screeps package
-const getPathFromSteam = () => {
-    const steam = getGamePath(464350);
-    if (steam?.game) {
-        return path.join(steam.game.path, 'package.nw');
-    }
-};
-
-// Backup method to locate Screeps package
-const getPathFromSystem = () => {
-    const screepsPath = ['steamapps', 'common', 'Screeps', 'package.nw'];
-    const windowsPath = ['Program Files (x86)', 'Steam', ...screepsPath];
-    switch (process.platform) {
-        case 'darwin': // macOS
-            return path.join(os.homedir(), 'Library', 'Application Support', 'Steam', ...screepsPath);
-        case 'linux':
-            if (process.env.WSL_DISTRO_NAME) {
-                return path.join('/mnt/c/', ...windowsPath);
-            }
-            return path.join(os.homedir(), '.steam', 'steam', ...screepsPath);
-        case 'win32':
-            return path.join('C:', ...windowsPath);
-    }
-};
-
 const exitOnPackageError = () => {
     error('Could not find the Screeps "package.nw".');
     error('Use the "--package" argument to specify the path to the "package.nw" file.');
@@ -94,11 +68,14 @@ const exitOnPackageError = () => {
 };
 
 // Locate and read `package.nw`
-const [data, stat] = await (async function () {
-    const pkgPath = argv.package ?? getPathFromSteam() ?? getPathFromSystem();
-    if (!pkgPath || !existsSync(pkgPath)) exitOnPackageError();
+const readPackageData = async () => {
+    const pkgPath = argv.package ?? (await getScreepsPath());
+    if (!pkgPath) exitOnPackageError();
+    console.log('📦', chalk.dim('Package'), pkgPath);
     return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch(exitOnPackageError);
-})();
+};
+
+const [data, stat] = await readPackageData();
 
 // Read package zip metadata
 const zip = new JSZip();

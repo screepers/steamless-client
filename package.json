@@ -5,12 +5,11 @@
     "version": "1.8.0",
     "bin": "dist/clientApp.js",
     "scripts": {
-        "dev": "tsc -w",
+        "dev": "rollup -cw",
         "prebuild": "rimraf dist",
-        "build": "tsc",
+        "build": "rollup -c",
         "format": "prettier --write 'src/**/*.ts'",
-        "lint": "eslint src/**/*.ts",
-        "prepare": "tsc"
+        "lint": "eslint src/**/*.ts"
     },
     "repository": {
         "type": "git",
@@ -23,6 +22,8 @@
     },
     "homepage": "https://github.com/screepers/steamless-client#readme",
     "devDependencies": {
+        "@rollup/plugin-node-resolve": "^15.2.3",
+        "@rollup/plugin-typescript": "^11.1.6",
         "@types/argparse": "2.0.10",
         "@types/chalk": "^2.2.0",
         "@types/http-proxy": "1.17.7",
@@ -37,9 +38,11 @@
         "eslint-plugin-prettier": "^5.1.2",
         "prettier": "^3.3.1",
         "rimraf": "^5.0.7",
+        "rollup": "^4.18.0",
         "typescript": "4.3.5"
     },
     "dependencies": {
+        "@types/winreg": "^1.2.36",
         "argparse": "2.0.1",
         "chalk": "^5.3.0",
         "ejs": "^3.1.10",
@@ -50,6 +53,6 @@
         "koa-conditional-get": "3.0.0",
         "koa-views": "^8.1.0",
         "node-fetch": "2.6.1",
-        "steam-game-path": "^2.2.4"
+        "winreg": "^1.2.5"
     }
 }
