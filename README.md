@@ -30,7 +30,7 @@ Steam OpenId support is required on your local server. Enable it with [screepsmo
 - `--package`: Specifies the path to the Screeps client package.nw file. Only needed if the path isn't automatically detected.
 - `--host`: Changes the host address. (default: `localhost`)
 - `--port`: Changes the port. (default: `8080`)
-- `--server_list`: Specifies the path to a custom server list JSON file to use for the Server List page.
+- `--server_list`: Specifies the path to a custom server list json file to use for the Server List page.
 - `--beautify`: Formats .js files loaded in the client for debugging.
 
 ### Examples
@@ -79,13 +79,13 @@ SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/pa
 
 #### Custom server list
 
-Specify the path to your custom server list JSON file:
+Specify the path to your custom server list json file:
 
 ```sh
 npx screepers-steamless-client --server_list ./custom_server_list.json
 ```
 
-The custom server list JSON file should follow the same format as the provided [server_list.json](server_list.json). Each object in the JSON file should include a `type`, `name`, and `url`:
+The custom server list json file should follow the same format as the provided [server_list.json](server_list.json). Each object in the json file should include a `type`, `name`, and `url`:
 * `type`: This is used to organize servers into sections.
 * `name`: This is the name of the server.
 * `url`: This is used to create a link to the server.
@@ -95,12 +95,14 @@ The custom server list JSON file should follow the same format as the provided [
   {
     "type": "official",
     "name": "Official Server",
-    "url": "https://screeps.com"
+    "url": "https://screeps.com",
+    "subdomain": "mmo"
   },
   {
     "type": "private",
     "name": "Local Server",
-    "url": "http://localhost:21025"
+    "url": "http://localhost:21025",
+    "subdomain": "private"
   }
 ]
 ```

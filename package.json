@@ -3,10 +3,11 @@
     "description": "A browser client for Screeps",
     "type": "module",
     "version": "1.8.0",
-    "bin": "dist/index.js",
+    "bin": "dist/clientApp.js",
     "scripts": {
-        "build": "tsc",
         "dev": "tsc -w",
+        "prebuild": "rimraf dist",
+        "build": "tsc",
         "format": "prettier --write 'src/**/*.ts'",
         "lint": "eslint src/**/*.ts",
         "prepare": "tsc"
@@ -28,7 +29,6 @@
         "@types/js-beautify": "1.13.2",
         "@types/koa": "2.13.4",
         "@types/koa-conditional-get": "2.0.0",
-        "@types/koa-static": "^4.0.4",
         "@types/node": "16.4.13",
         "@types/node-fetch": "2.5.12",
         "@typescript-eslint/eslint-plugin": "^6.18.0",
@@ -36,6 +36,7 @@
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-prettier": "^5.1.2",
         "prettier": "^3.3.1",
+        "rimraf": "^5.0.7",
         "typescript": "4.3.5"
     },
     "dependencies": {
@@ -47,7 +48,6 @@
         "jszip": "3.7.1",
         "koa": "2.13.1",
         "koa-conditional-get": "3.0.0",
-        "koa-static": "^5.0.0",
         "koa-views": "^8.1.0",
         "node-fetch": "2.6.1",
         "steam-game-path": "^2.2.4"

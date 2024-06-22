@@ -10,6 +10,7 @@
 <body>
     <main>
         <div class="card">
+            <% // The serverList is passed in from the clientApp %>
             <% serverList.forEach(section => { %>
                 <div class="card-section" data-section="<%= section.name %>">
                     <% if (section.name.toLowerCase() === 'official') { %>
@@ -31,6 +32,6 @@
             <% }) %>
         </div>
     </main>
-    <script src="/dist/serverList.js"></script>
+    <script src="/dist/serverStatus.js"></script>
 </body>
 </html>

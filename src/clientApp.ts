@@ -1,17 +1,10 @@
 #!/usr/bin/env node
-
-/**
- * @file Screepers Steamless Client
- * @description This script serves the Screeps client from the local filesystem and proxies API requests to the Screeps server.
- */
-
 import { ArgumentParser } from 'argparse';
 import { createReadStream, existsSync, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
 import Koa from 'koa';
-import serve from 'koa-static';
 import views from 'koa-views';
 import koaConditionalGet from 'koa-conditional-get';
 import fetch from 'node-fetch';
@@ -215,26 +208,31 @@ interface Server {
     name: string;
     url: string;
     api: string;
+    subdomain?: string;
 }
 
 const getServerListConfig = async () => {
-    let serverConfigPath = argv.server_list;
-    if (!serverConfigPath) {
-        serverConfigPath = path.join(__dirname, 'server_list.json');
-        if (!existsSync(serverConfigPath)) {
-            serverConfigPath = path.join(__dirname, '../server_list.json');
+    let serverListPath = argv.server_list;
+    if (!serverListPath) {
+        const serverListFile = 'server_list.json';
+        serverListPath = path.join(__dirname, `../settings/${serverListFile}`);
+        if (!existsSync(serverListPath)) {
+            serverListPath = path.join(__dirname, serverListFile);
         }
     }
 
-    const serverConfig: Server[] = JSON.parse(await fs.readFile(serverConfigPath, 'utf-8'));
+    const serverConfig: Server[] = JSON.parse(await fs.readFile(serverListPath, 'utf-8'));
     const serverTypes = Array.from(new Set(serverConfig.map((server) => server.type)));
     const serverList = serverTypes.map((type) => {
         const serversOfType = serverConfig
             .filter((server) => server.type === type)
             .map((server) => {
-                const { origin, pathname } = new URL(server.url);
-                const url = `http://${host}:${port}/(${origin})${pathname}`;
-                const api = `http://${host}:${port}/(${origin})${pathname}/api/version`;
+                const subdomain = host === 'localhost' && server.subdomain ? `${server.subdomain}.` : '';
+                let { origin, pathname } = new URL(server.url);
+                pathname = pathname.endsWith('/') ? pathname : `${pathname}/`;
+
+                const url = `http://${subdomain}${host}:${port}/(${origin})${pathname}`;
+                const api = `http://${host}:${port}/(${origin})${pathname}api/version`;
                 return { ...server, url, api };
             });
 
@@ -273,7 +271,7 @@ koa.use(async (context, next) => {
 const publicFiles = [
     { file: 'public/favicon.png', type: 'image/png' },
     { file: 'public/style.css', type: 'text/css' },
-    { file: 'dist/serverList.js', type: 'text/javascript' },
+    { file: 'dist/serverStatus.js', type: 'text/javascript' },
 ];
 
 // Serve public files
@@ -291,23 +289,6 @@ koa.use(async (context, next) => {
 
     return next();
 });
-
-// Inspect Screeps client package (may be useful for debugging)
-const inspectScreepsClientPackage = async () => {
-    const paths = Object.keys(zip.files).reduce((acc: Record<string, any>, path) => {
-        const [folder, ...file] = path.split('/');
-        if (file.length) {
-            acc[folder] = acc[folder] ?? [];
-            acc[folder].push([folder, file.join('/')].join('/'));
-        } else {
-            acc['/'] = acc['/'] ?? [];
-            acc['/'].push(folder);
-        }
-        return acc;
-    }, {});
-    await fs.writeFile('client_files.json', JSON.stringify(paths, null, 2));
-};
-// inspectScreepsClientPackage();
 
 // Serve client assets
 koa.use(async (context, next) => {

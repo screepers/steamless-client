@@ -1,6 +1,3 @@
-/**
- * @file Script to check server statuses on the server list page
- */
 (() => {
     const setLoading = (elem: HTMLElement) => {
         elem.style.backgroundColor = 'transparent';
