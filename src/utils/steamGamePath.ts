@@ -29,7 +29,7 @@ async function getSteamPath() {
 
             // Linux, checks for Steam in common locations in the home directory
             for (const dir of [
-                ['.steam', 'root'], // symlink usually pointing to the Steam directory (most common)
+                ['.steam', 'root', 'steam'], // symlink usually pointing to the Steam directory (most common)
                 ['.steam', 'steam'], // ubuntu's multiverse repository
                 ['.local', 'share', 'Steam'], // steam.deb on steampowered website
                 ['.var', 'app', 'com.valvesoftware.Steam', '.steam'], // flatpak
