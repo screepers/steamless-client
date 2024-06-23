@@ -2,8 +2,10 @@
     "name": "screepers-steamless-client",
     "description": "A browser client for Screeps",
     "type": "module",
-    "version": "1.8.0",
-    "bin": "dist/clientApp.js",
+    "version": "1.10.2",
+    "bin": {
+        "screepers-steamless-client": "dist/clientApp.js"
+    },
     "scripts": {
         "prebuild": "rimraf dist",
         "build": "rollup -c",
@@ -16,7 +18,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/screepers/steamless-client"
+        "url": "git+https://github.com/screepers/steamless-client.git"
     },
     "author": "laverdet",
     "license": "ISC",
