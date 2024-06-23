@@ -1,3 +1,5 @@
+import { CodeStore } from './types';
+
 // Convert the startup script method into a string
 export function getStartupScript(backend: string) {
     const scriptContent = startupScript.toString();
@@ -5,8 +7,6 @@ export function getStartupScript(backend: string) {
     const extractedContent = scriptContent.substring(firstBraceIndex + 1, scriptContent.length - 1);
     return ['<script>', `const backend = '${JSON.stringify(backend)}';`, extractedContent, '</script>'].join('\n');
 }
-
-type CodeStore = { timestamp: number };
 
 // This script is injected into the client index.html header
 function startupScript(backend: string) {

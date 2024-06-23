@@ -15,6 +15,7 @@ import chalk from 'chalk';
 import { getScreepsPath } from './utils/steamGamePath';
 import { getStartupScript } from './utils/startupScript';
 import { error } from './utils/log';
+import { Server } from './utils/types';
 
 // Log welcome message
 console.log('🧩', chalk.yellowBright('Screepers Steamless Client'));
@@ -113,14 +114,6 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.join(__dirname, '..');
 const indexFile = 'index.ejs';
 
-interface Server {
-    type: string;
-    name: string;
-    url: string;
-    api: string;
-    subdomain?: string;
-}
-
 const getServerListConfig = async () => {
     let serverListPath = argv.server_list;
     if (!serverListPath) {
@@ -148,7 +141,7 @@ const getServerListConfig = async () => {
 
         return {
             name: type.charAt(0).toUpperCase() + type.slice(1),
-            logo: type === 'official' ? `http://${host}:${port}/(http://${host}:${port})/logotype.svg` : undefined,
+            logo: type === 'official' ? `http://${host}:${port}/(file)/logotype.svg` : undefined,
             servers: serversOfType,
         };
     });
