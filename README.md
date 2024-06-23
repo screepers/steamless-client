@@ -10,13 +10,13 @@ Node.js v20+
 
 ## Installation
 
-Temporarily installs and runs the latest client app:
+Option 1. Temporarily install and run the latest client app:
 
 ```sh
 npx screepers-steamless-client
 ```
 
-Install the client app globally and then run the client app:
+Option 2. Install the client app globally and then run the client app:
 
 ```sh
 npm install -g screepers-steamless-client
