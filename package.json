@@ -48,10 +48,6 @@
     },
     "dependencies": {
         "@ladjs/koa-views": "^9.0.0",
-        "@semantic-release/commit-analyzer": "^13.0.0",
-        "@semantic-release/github": "^10.0.6",
-        "@semantic-release/npm": "^12.0.1",
-        "@semantic-release/release-notes-generator": "^14.0.1",
         "argparse": "2.0.1",
         "chalk": "^5.3.0",
         "ejs": "^3.1.10",
@@ -61,7 +57,6 @@
         "koa": "2.15.3",
         "koa-conditional-get": "3.0.0",
         "node-fetch": "^3.3.2",
-        "semantic-release": "^24.0.0",
         "winreg": "^1.2.5"
     }
 }

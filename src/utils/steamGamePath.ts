@@ -9,19 +9,27 @@ export async function getScreepsPath() {
 
     switch (platform) {
         case 'darwin': {
-            // MacOS, checks for Steam in the default location
+            // MacOS, checks for screeps in the default Steam location
             const steamPath = path.join(os.homedir(), 'Library', 'Application Support', 'Steam');
             return findScreepsPath(steamPath);
         }
 
         case 'linux': {
-            // WSL support (very basic, checks for Steam in the default location)
+            // WSL support, checks for screeps in the default Steam location on the Windows host
             if (env.WSL_DISTRO_NAME) {
-                const steamPath = path.join('/mnt/c', 'Program Files (x86)', 'Steam');
-                return findScreepsPath(steamPath);
+                const mountPath = '/mnt';
+                const mountDrives = fs.readdirSync(mountPath).filter((name) => name.length === 1);
+                for (const drive of mountDrives) {
+                    const steamPath = path.join(mountPath, drive, 'Program Files (x86)', 'Steam');
+                    const screepsPath = findScreepsPath(steamPath);
+                    if (screepsPath) {
+                        return screepsPath;
+                    }
+                }
+                return null;
             }
 
-            // Linux, checks for Steam in common locations in the home directory
+            // Linux, checks for screeps in common Steam locations within the user's home directory
             for (const dir of [
                 ['.steam', 'root', 'steam'], // steam root symlink
                 ['.steam', 'steam'], // ubuntu's multiverse repository
@@ -39,7 +47,7 @@ export async function getScreepsPath() {
         }
 
         case 'win32': {
-            // Windows, check registry for Steam path
+            // Windows, checks for screeps in Steam location from the Windows registry
             let steamPath = await getSteamPathFromWinReg();
             if (steamPath) {
                 const screepsPath = findScreepsPath(steamPath);
@@ -48,8 +56,9 @@ export async function getScreepsPath() {
                 }
             }
 
-            // Windows fallback method (very basic, checks for Steam in the default location)
-            const programFilesPath = env['PROGRAMFILES(X86)'] || path.join('C:', 'Program Files (x86)');
+            // Windows fallback, checks for screeps in the default Steam location
+            const programFilesPath =
+                env['PROGRAMFILES(X86)'] || path.join(env.SystemDrive || 'C:', 'Program Files (x86)');
             steamPath = path.join(programFilesPath, 'Steam');
             return findScreepsPath(steamPath);
         }
