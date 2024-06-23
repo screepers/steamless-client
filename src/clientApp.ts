@@ -67,7 +67,7 @@ const exitOnPackageError = () => {
 // Locate and read `package.nw`
 const readPackageData = async () => {
     const pkgPath = argv.package ?? (await getScreepsPath());
-    if (!pkgPath) exitOnPackageError();
+    if (!pkgPath || !existsSync(pkgPath)) exitOnPackageError();
     console.log('📦', chalk.dim('Package >'), chalk.gray(pkgPath));
     return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch(exitOnPackageError);
 };
