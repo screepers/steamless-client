@@ -107,7 +107,7 @@ Set the path to a custom server list json config file.
 npx screepers-steamless-client --server_list ./custom_server_list.json
 ```
 
-The custom server list json file should follow the same format as [server_list.json](server_list.json). Each object in the json file should include a type, name, and url:
+The custom server list json file should follow the same format as [server_list.json](settings/server_list.json). Each object in the json file should include a type, name, and url:
 * `type` &mdash; This is used to organize servers into sections.
 * `name` &mdash; This is the name of the server.
 * `url` &mdash; This is used to create a link to the server.
