@@ -10,13 +10,13 @@ Node.js v20+
 
 ## Installation
 
-Run the latest client app (temporary install):
+Temporarily installs and runs the latest client app:
 
 ```sh
 npx screepers-steamless-client
 ```
 
-Install the client app globally:
+Install the client app globally and then run the client app:
 
 ```sh
 npm install -g screepers-steamless-client
@@ -25,11 +25,9 @@ screepers-steamless-client
 
 ## Usage
 
-With default settings, access the client's server list page at http://localhost:8080/. This address can be changed with the `--host` and `--port` arguments.
+View the server list page at http://localhost:8080/. This address can be changed with the `--host` and `--port` arguments.
 
-If the `--backend` argument is used, this URL will directly proxy the backend server and disable the server list page.
-
-If not using the `--backend` argument, you can use the format `http://localhost:8080/(SERVER_ADDRESS)/` to access different servers.
+Different servers can be accessed from the server list page, or using the url format `http://localhost:8080/(SERVER_ADDRESS)/`
 
 - For the official server: http://localhost:8080/(https://screeps.com)/
 
@@ -46,8 +44,8 @@ All of the command line arguments are optional.
 - `--package` &mdash; Used to set the path to the Screeps package.nw file. Use this if the path isn't automatically detected.
 - `--host` &mdash; Changes the host address. (default: localhost)
 - `--port` &mdash; Changes the port. (default: 8080)
-- `--backend` &mdash; Used to configure a backend URL. If provided, the client app proxies this endpoint and the server list page is disabled.
-- `--internal_backend` &mdash; Used to configure an internal backend URL. If provided, the client app uses this address to reference the internal server endpoint.
+- `--backend` &mdash; Used to configure a backend url. If provided, the client app proxies this endpoint and the server list page is disabled.
+- `--internal_backend` &mdash; Used to configure an internal backend url. If provided, the client app uses this address to reference the internal server endpoint.
 - `--server_list` &mdash; Used to set the path to a custom server list json config file.
 - `--beautify` &mdash; Formats .js files loaded in the client for debugging.
 
