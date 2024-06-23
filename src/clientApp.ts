@@ -148,7 +148,7 @@ const getServerListConfig = async () => {
 
         return {
             name: type.charAt(0).toUpperCase() + type.slice(1),
-            logo: type === 'official' ? serversOfType[0].url + 'logotype.svg' : undefined,
+            logo: type === 'official' ? `http://${host}:${port}/(http://${host}:${port})/logotype.svg` : undefined,
             servers: serversOfType,
         };
     });
