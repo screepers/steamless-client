@@ -1,6 +1,6 @@
 name: Pull Request
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - edited
@@ -9,9 +9,25 @@ permissions:
   pull-requests: read
 jobs:
   main:
-    name: Validate PR Title
+    name: Verify PR Title
     runs-on: ubuntu-latest
     steps:
       - uses: amannn/action-semantic-pull-request@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build:
+    name: Verify Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Install dependencies
+        env:
+          npm_config_ignore_scripts: true
+        run: npm ci
+      - name: Build
+        run: npm run build

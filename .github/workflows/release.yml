@@ -20,8 +20,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
-      - name: Install
+      - name: Install dependencies
+        env:
+          npm_config_ignore_scripts: true
         run: npm ci
+      - name: Build
+        run: npm run build
       - name: Install semantic-release
         run: npm i semantic-release @semantic-release/commit-analyzer @semantic-release/github @semantic-release/npm @semantic-release/release-notes-generator
       - name: Publish
