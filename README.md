@@ -6,7 +6,7 @@ The Screepers Steamless Client is a web proxy that allows you to run [Screeps: W
 
 ## Requirements
 
-Node.js v20+ recommended.
+Node.js v20+
 
 ## Installation
 
