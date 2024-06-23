@@ -12,7 +12,9 @@ import path from 'path';
 import { Transform } from 'stream';
 import { fileURLToPath, URL } from 'url';
 import chalk from 'chalk';
-import { getScreepsPath } from './steamGamePath';
+import { getScreepsPath } from './utils/steamGamePath';
+import { getStartupScript } from './utils/startupScript';
+import { error } from './utils/log';
 
 // Log welcome message
 console.log('🧩', chalk.yellowBright('Screepers Steamless Client'));
@@ -51,9 +53,6 @@ const argv = (function () {
     return parser.parse_args();
 })();
 
-// Error logging
-const error = (...args: unknown[]) => console.error('❌', chalk.bold.red('Error'), ...args);
-
 // Extract arguments
 const beautify = argv.beautify;
 
@@ -71,7 +70,7 @@ const exitOnPackageError = () => {
 const readPackageData = async () => {
     const pkgPath = argv.package ?? (await getScreepsPath());
     if (!pkgPath) exitOnPackageError();
-    console.log('📦', chalk.dim('Package'), pkgPath);
+    console.log('📦', chalk.dim('Package >'), chalk.gray(pkgPath));
     return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch(exitOnPackageError);
 };
 
@@ -108,72 +107,6 @@ const extract = (url: string) => {
     }
 };
 
-// Script content to inject into the client index.html
-const generateScriptContent = (backend: string) => {
-    if (localStorage.backendDomain && localStorage.backendDomain !== backend) {
-        const keysToPreserve = ['game.room.displayOptions', 'game.world-map.displayOptions2', 'game.editor.hidden'];
-        for (const key of Object.keys(localStorage)) {
-            if (!keysToPreserve.includes(key)) {
-                localStorage.removeItem(key);
-            }
-        }
-    }
-    localStorage.backendDomain = backend;
-    if (
-        (localStorage.auth === 'null' && localStorage.prevAuth === 'null') ||
-        60 * 60 * 1000 < Date.now() - localStorage.lastToken ||
-        (localStorage.prevAuth !== '"guest"' && (localStorage.auth === 'null' || !localStorage.auth))
-    ) {
-        localStorage.auth = '"guest"';
-    }
-    localStorage.tutorialVisited = 'true';
-    localStorage.placeSpawnTutorialAsked = '1';
-    localStorage.tipTipOfTheDay = '-1';
-    localStorage.prevAuth = localStorage.auth;
-    localStorage.lastToken = Date.now();
-    (function () {
-        let auth = localStorage.auth;
-        setInterval(() => {
-            if (auth !== localStorage.auth) {
-                auth = localStorage.auth;
-                localStorage.lastToken = Date.now();
-            }
-        }, 1000);
-    })();
-    // The client will just fill this up with data until the application breaks.
-    if (localStorage['users.code.activeWorld']?.length > 1024 * 1024) {
-        try {
-            type UserCode = { timestamp: number };
-            const code = JSON.parse(localStorage['users.code.activeWorld']);
-            localStorage['users.code.activeWorld'] = JSON.stringify(
-                code.sort((a: UserCode, b: UserCode) => b.timestamp - a.timestamp).slice(0, 2),
-            );
-        } catch (err) {
-            delete localStorage['users.code.activeWorld'];
-        }
-    }
-    // Send the user to map after login from /register
-    addEventListener('message', () => {
-        setTimeout(() => {
-            if (localStorage.auth && localStorage.auth !== '"guest"' && document.location.hash === '#!/register') {
-                document.location.hash = '#!/';
-            }
-        });
-    });
-};
-
-// Converts the script content into a string that can be injected into the client index.html
-const generateScript = (backend: string) => {
-    const scriptContent = generateScriptContent.toString();
-    const firstBraceIndex = scriptContent.indexOf('{');
-    const extractedContent = scriptContent.substring(firstBraceIndex + 1, scriptContent.length - 1);
-
-    return `<script>
-        const backend = '${JSON.stringify(backend)}';
-        ${extractedContent}
-    </script>`;
-};
-
 // Get system path for public files dir
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -205,11 +138,11 @@ const getServerListConfig = async () => {
             .filter((server) => server.type === type)
             .map((server) => {
                 const subdomain = host === 'localhost' && server.subdomain ? `${server.subdomain}.` : '';
-                let { origin, pathname } = new URL(server.url);
-                pathname = pathname.endsWith('/') ? pathname : `${pathname}/`;
+                const { origin, pathname } = new URL(server.url);
+                const urlpath = pathname.endsWith('/') ? pathname : `${pathname}/`;
 
-                const url = `http://${subdomain}${host}:${port}/(${origin})${pathname}`;
-                const api = `http://${host}:${port}/(${origin})${pathname}api/version`;
+                const url = `http://${subdomain}${host}:${port}/(${origin})${urlpath}`;
+                const api = `http://${host}:${port}/(${origin})${urlpath}api/version`;
                 return { ...server, url, api };
             });
 
@@ -291,9 +224,9 @@ koa.use(async (context, next) => {
     context.body = await (async function () {
         if (urlPath === 'index.html') {
             let body = await file.async('text');
-            // Inject startup shim
+            // Inject startup script
             const header = '<title>Screeps</title>';
-            body = body.replace(header, generateScript(info.backend) + header);
+            body = body.replace(header, getStartupScript(info.backend) + header);
             // Remove tracking pixels
             body = body.replace(
                 /<script[^>]*>[^>]*xsolla[^>]*<\/script>/g,
@@ -471,4 +404,4 @@ process.on('SIGTERM', cleanup);
 process.on('exit', () => server.close());
 
 // Log server information
-console.log('🌐', chalk.dim('Ready --'), chalk.white(`http://${host}:${port}/`));
+console.log('🌐', chalk.dim('Ready >'), chalk.white(`http://${host}:${port}/`));
