@@ -1,4 +1,4 @@
-(() => {
+((document) => {
     const setLoading = (elem: HTMLElement) => {
         elem.style.backgroundColor = 'transparent';
         elem.style.border = '2px solid gold';
@@ -49,4 +49,4 @@
             });
         });
     });
-})();
+})(document);

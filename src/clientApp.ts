@@ -5,7 +5,7 @@ import httpProxy from 'http-proxy';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
 import Koa from 'koa';
-import views from 'koa-views';
+import views from '@ladjs/koa-views';
 import koaConditionalGet from 'koa-conditional-get';
 import fetch from 'node-fetch';
 import path from 'path';
@@ -53,9 +53,6 @@ const argv = (function () {
     });
     return parser.parse_args();
 })();
-
-// Extract arguments
-const beautify = argv.beautify;
 
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
@@ -247,9 +244,10 @@ koa.use(async (context, next) => {
             );
             return body;
         } else if (urlPath === 'config.js') {
-            const history = argv.backend ? '/room-history/' : `/(${info.backend})/room-history/`;
-            const api = argv.backend ? '/api/' : `/(${info.backend})/api/`;
-            const socket = argv.backend ? '/socket/' : `/(${info.backend})/socket/`;
+            const basePath = argv.backend ? '' : `/(${info.backend})`;
+            const history = `${basePath}/room-history/`;
+            const api = `${basePath}/api/`;
+            const socket = `${basePath}/socket/`;
             // Screeps server config
             return `
                 var HISTORY_URL = '${history}';
@@ -305,8 +303,8 @@ koa.use(async (context, next) => {
                 }
                 if (backend.hostname !== 'screeps.com') {
                     // Replace room-history URL
-                    const historyUrl =
-                        `http://${host}:${port}` + (argv.backend ? '' : `/(${info.backend})`) + '/room-history';
+                    const basePath = argv.backend ? '' : `/(${info.backend})`;
+                    const historyUrl = `http://${host}:${port}${basePath}/room-history`;
                     text = text.replace(
                         /http:\/\/"\+s\.options\.host\+":"\+s\.options\.port\+"\/room-history/g,
                         historyUrl,
@@ -316,7 +314,7 @@ koa.use(async (context, next) => {
                     text = text.replace(/https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${info.backend}/assets`);
                 }
             }
-            return beautify ? jsBeautify(text) : text;
+            return argv.beautify ? jsBeautify(text) : text;
         } else {
             // JSZip doesn't implement their read stream correctly and it causes EPIPE crashes. Pass it
             // through a no-op transform stream first to iron that out.
