@@ -29,15 +29,9 @@ jobs:
       - name: Build
         run: npm run build
       - name: Install semantic-release
-        run: npm i semantic-release @semantic-release/commit-analyzer @semantic-release/github @semantic-release/npm @semantic-release/release-notes-generator
-      - name: Publish
+        run: npm i semantic-release @semantic-release/commit-analyzer @semantic-release/github @semantic-release/npm @semantic-release/release-notes-generator     
+      - name: Publish and commit version changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
-      - name: Commit changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add package.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: release [skip ci]" && git push)
+        run: bash scripts/release.sh
