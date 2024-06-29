@@ -1,5 +1,11 @@
 import { CodeStore } from './types';
 
+declare global {
+    interface Window {
+        angular: any;
+    }
+}
+
 // Convert the startup script method into a string
 export function getStartupScript(backend: string) {
     const scriptContent = startupScript.toString();
@@ -59,4 +65,37 @@ function startupScript(backend: string) {
             }
         });
     });
+
+    // Client abuse
+    (() => {
+        // Disable decorations
+        const disableDecorations = () => {
+            const intervalId = setInterval(() => {
+                const roomElement = document.querySelector('.room.ng-scope');
+
+                if (window.angular && roomElement) {
+                    clearInterval(intervalId);
+
+                    const connection = window.angular.element(document.body).injector().get('Connection');
+                    const roomScope = window.angular.element(roomElement).scope();
+                    connection.onRoomUpdate(roomScope, () => {
+                        roomScope.Room.decorations = [];
+                    });
+                }
+            }, 100);
+        };
+        disableDecorations();
+
+        // Re-initialize when the route changes
+        const eventIntervalId = setInterval(() => {
+            const gameElement = document.querySelector('.game.ng-scope');
+
+            if (window.angular && gameElement) {
+                clearInterval(eventIntervalId);
+
+                const $rootScope = window.angular.element(gameElement).injector().get('$rootScope');
+                $rootScope.$on('$routeChangeSuccess', disableDecorations);
+            }
+        }, 100);
+    })();
 }
