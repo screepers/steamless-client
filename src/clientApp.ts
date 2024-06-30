@@ -13,8 +13,7 @@ import { Transform } from 'stream';
 import { fileURLToPath, URL } from 'url';
 import chalk from 'chalk';
 import { getScreepsPath } from './utils/steamGamePath';
-import { getStartupScript } from './utils/startupScript';
-import { error } from './utils/log';
+import { removeRoomDecorations, clientStartup, generateScriptTag } from './utils/clientScripts';
 import { Server } from './utils/types';
 
 // Log welcome message
@@ -53,6 +52,8 @@ const argv = (function () {
     });
     return parser.parse_args();
 })();
+
+export const error = (...args: unknown[]) => console.error('❌', chalk.bold.red('Error'), ...args);
 
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
@@ -216,7 +217,13 @@ koa.use(async (context, next) => {
             let body = await file.async('text');
             // Inject startup script
             const header = '<title>Screeps</title>';
-            body = body.replace(header, getStartupScript(info.backend) + header);
+            const replaceHeader = [
+                header,
+                generateScriptTag(clientStartup, { backend: info.backend }),
+                generateScriptTag(removeRoomDecorations, { backend: info.backend }),
+            ].join('\n');
+            body = body.replace(header, replaceHeader);
+
             // Remove tracking pixels
             body = body.replace(
                 /<script[^>]*>[^>]*xsolla[^>]*<\/script>/g,

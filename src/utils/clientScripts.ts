@@ -6,16 +6,20 @@ declare global {
     }
 }
 
-// Convert the startup script method into a string
-export function getStartupScript(backend: string) {
-    const scriptContent = startupScript.toString();
+export function generateScriptTag(func: Function, args: { [key: string]: any }) {
+    const scriptContent = func.toString();
     const firstBraceIndex = scriptContent.indexOf('{');
     const extractedContent = scriptContent.substring(firstBraceIndex + 1, scriptContent.length - 1);
-    return ['<script>', `const backend = '${JSON.stringify(backend)}';`, extractedContent, '</script>'].join('\n');
+
+    const argStrings = Object.entries(args).map(([key, value]) => {
+        return `const ${key} = ${JSON.stringify(value)};`;
+    });
+
+    return ['<script>', '(function() {', ...argStrings, extractedContent, '})();', '</script>'].join('\n');
 }
 
-// This script is injected into the client index.html header
-function startupScript(backend: string) {
+export function clientStartup(backend: string) {
+    // Clear the local storage if the backend domain has changed
     if (localStorage.backendDomain && localStorage.backendDomain !== backend) {
         const keysToPreserve = ['game.room.displayOptions', 'game.world-map.displayOptions2', 'game.editor.hidden'];
         for (const key of Object.keys(localStorage)) {
@@ -24,7 +28,11 @@ function startupScript(backend: string) {
             }
         }
     }
+
+    // Set the backend domain
     localStorage.backendDomain = backend;
+
+    // Set the auth token to guest if it's not set or if it's been more than an hour since the last token was set
     if (
         (localStorage.auth === 'null' && localStorage.prevAuth === 'null') ||
         60 * 60 * 1000 < Date.now() - localStorage.lastToken ||
@@ -32,20 +40,25 @@ function startupScript(backend: string) {
     ) {
         localStorage.auth = '"guest"';
     }
+
+    // Set the client to skip tutorials and tip of the day
     localStorage.tutorialVisited = 'true';
     localStorage.placeSpawnTutorialAsked = '1';
     localStorage.tipTipOfTheDay = '-1';
+
+    // Set the last token to the current time
     localStorage.prevAuth = localStorage.auth;
     localStorage.lastToken = Date.now();
-    (function () {
-        let auth = localStorage.auth;
-        setInterval(() => {
-            if (auth !== localStorage.auth) {
-                auth = localStorage.auth;
-                localStorage.lastToken = Date.now();
-            }
-        }, 1000);
-    })();
+
+    // Update the last token if the auth token changes
+    let auth = localStorage.auth;
+    setInterval(() => {
+        if (auth !== localStorage.auth) {
+            auth = localStorage.auth;
+            localStorage.lastToken = Date.now();
+        }
+    }, 1000);
+
     // The client will just fill this up with data until the application breaks.
     if (localStorage['users.code.activeWorld']?.length > 1024 * 1024) {
         try {
@@ -57,6 +70,7 @@ function startupScript(backend: string) {
             delete localStorage['users.code.activeWorld'];
         }
     }
+
     // Send the user to map after login from /register
     addEventListener('message', () => {
         setTimeout(() => {
@@ -65,37 +79,38 @@ function startupScript(backend: string) {
             }
         });
     });
+}
 
-    // Client abuse
-    (() => {
-        // Disable decorations
-        const disableDecorations = () => {
-            const intervalId = setInterval(() => {
-                const roomElement = document.querySelector('.room.ng-scope');
+export function removeRoomDecorations(backend: string) {
+    if (!backend.includes('screeps.com')) {
+        return;
+    }
 
-                if (window.angular && roomElement) {
-                    clearInterval(intervalId);
-
-                    const connection = window.angular.element(document.body).injector().get('Connection');
-                    const roomScope = window.angular.element(roomElement).scope();
-                    connection.onRoomUpdate(roomScope, () => {
-                        roomScope.Room.decorations = [];
-                    });
-                }
-            }, 100);
-        };
-        disableDecorations();
-
-        // Re-initialize when the route changes
-        const eventIntervalId = setInterval(() => {
-            const gameElement = document.querySelector('.game.ng-scope');
-
-            if (window.angular && gameElement) {
-                clearInterval(eventIntervalId);
-
-                const $rootScope = window.angular.element(gameElement).injector().get('$rootScope');
-                $rootScope.$on('$routeChangeSuccess', disableDecorations);
+    const onRoomUpdate = () => {
+        const roomInterval = setInterval(() => {
+            const roomElement = document.querySelector('.room.ng-scope');
+            if (window.angular && roomElement) {
+                clearInterval(roomInterval);
+                const connection = window.angular.element(document.body).injector().get('Connection');
+                const roomScope = window.angular.element(roomElement).scope();
+                connection.onRoomUpdate(roomScope, () => {
+                    // Remove room decorations
+                    roomScope.Room.decorations = [];
+                });
             }
         }, 100);
-    })();
+    };
+    onRoomUpdate();
+
+    const onRouteChange = () => {
+        const gameInterval = setInterval(() => {
+            const gameElement = document.querySelector('.game.ng-scope');
+            if (window.angular && gameElement) {
+                clearInterval(gameInterval);
+                const $rootScope = window.angular.element(gameElement).injector().get('$rootScope');
+                $rootScope.$on('$routeChangeSuccess', onRoomUpdate);
+            }
+        }, 100);
+    };
+    onRouteChange();
 }

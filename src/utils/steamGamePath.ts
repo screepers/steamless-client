@@ -2,7 +2,7 @@ import Registry from 'winreg';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { error } from './log';
+import chalk from 'chalk';
 
 export async function getScreepsPath() {
     const { env, platform } = process;
@@ -85,3 +85,5 @@ async function getSteamPathFromWinReg(): Promise<string | null> {
         return regKey.get('InstallPath', (err, item) => resolve(err ? null : item.value));
     });
 }
+
+export const error = (...args: unknown[]) => console.error('❌', chalk.bold.red('Error'), ...args);
