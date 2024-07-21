@@ -1,11 +1,5 @@
 import { CodeStore } from './types';
 
-declare global {
-    interface Window {
-        angular: any;
-    }
-}
-
 export function generateScriptTag(func: Function, args: { [key: string]: any }) {
     const scriptContent = func.toString();
     const firstBraceIndex = scriptContent.indexOf('{');
