@@ -15,7 +15,7 @@ import chalk from 'chalk';
 import { getScreepsPath } from './utils/steamGamePath';
 import { removeRoomDecorations, clientStartup, generateScriptTag } from './utils/clientScripts';
 import { Server } from './utils/types';
-import { ClientPath } from './utils/clientPath';
+import { ClientPath, Route } from './utils/clientPath';
 
 // Log welcome message
 console.log('🧩', chalk.yellowBright('Screepers Steamless Client'));
@@ -195,19 +195,10 @@ koa.use(async (context, next) => {
 // Serve client assets
 koa.use(async (context, next) => {
     const info = extract(context.path);
-    if (!info) {
+    if (!info || !context.header.host) {
         error('Unknown URL', chalk.dim(context.path));
         return;
     }
-
-    // TODO: very first thing to do here is check if the request is the official server (screeps.com)
-    // because we need to check if the first path in `info.endpoint` is a prefix such as "/season" or "/ptr"
-    // and we can strip that out of the path before we compare for the file in the zip
-
-    // If the `info.endpoint` does match a prefix, we should set a boolean flag to indicate that the prefix
-    // should be included in the URL path in other cases in the middleware content replacers
-
-    console.log('Debug >', info);
 
     const isOfficial = info.backend === 'https://screeps.com';
     const prefix = isOfficial ? info.endpoint.match(/^\/(season|ptr)/)?.[0] : undefined;
@@ -226,7 +217,12 @@ koa.use(async (context, next) => {
         return;
     }
 
-    const clientPath = new ClientPath({ host, port, prefix, backend: argv.backend, server: info.backend });
+    const clientPath = new ClientPath({
+        host: context.header.host,
+        prefix,
+        backend: argv.backend,
+        server: info.backend,
+    });
 
     // Rewrite various payloads
     context.body = await (async function () {
@@ -236,7 +232,9 @@ koa.use(async (context, next) => {
             const header = '<title>Screeps</title>';
             const replaceHeader = [
                 header,
-                generateScriptTag(clientStartup, { backend: info.backend }),
+                generateScriptTag(clientStartup, {
+                    backend: info.backend,
+                }),
                 generateScriptTag(removeRoomDecorations, { backend: info.backend }),
             ].join('\n');
             body = body.replace(header, replaceHeader);
@@ -268,34 +266,14 @@ koa.use(async (context, next) => {
             );
             return body;
         } else if (urlPath === 'config.js') {
-            const basePath = argv.backend ? '' : `/(${info.backend})`;
-            const history = `${basePath}/room-history/`;
-            const api = `${basePath}/api/`;
-            const socket = `${basePath}/socket/`;
-
             // Screeps server config
             let text = await file.async('text');
-            text = text.replace(/(API_URL = ')[^']*/, `$1${api}`);
-            text = text.replace(/(HISTORY_URL = ')[^']*/, `$1${history}`);
-            text = text.replace(/(WEBSOCKET_URL = ')[^']*/, `$1${socket}`);
-            text = text.replace(/(PREFIX: )[^,]*/, `$1'season'`); // TODO: set this on seasonal or PTR servers (servers using a prefix in the URL path)
+            const opts = { fullPath: true };
+            text = text.replace(/(API_URL = ')[^']*/, `$1${clientPath.getPath(Route.API, opts)}/`);
+            text = text.replace(/(HISTORY_URL = ')[^']*/, `$1${clientPath.getPath(Route.HISTORY, opts)}/`);
+            text = text.replace(/(WEBSOCKET_URL = ')[^']*/, `$1${clientPath.getPath(Route.SOCKET, opts)}/`);
+            text = text.replace(/(PREFIX: ')[^']*/, `$1${prefix?.substring(1) || ''}`);
             return text;
-
-            // Old method, overwrite the file
-            // return `
-            //     var HISTORY_URL = '${history}';
-            //     var API_URL = '${api}';
-            //     var WEBSOCKET_URL = '${socket}';
-            //     var CONFIG = {
-            //         API_URL: API_URL,
-            //         HISTORY_URL: HISTORY_URL,
-            //         WEBSOCKET_URL: WEBSOCKET_URL,
-            //         PREFIX: '',
-            //         IS_PTR: false,
-            //         DEBUG: false,
-            //         XSOLLA_SANDBOX: false,
-            //     };
-            // `;
         } else if (context.path.endsWith('.js')) {
             let text = await file.async('text');
             if (urlPath === 'build.min.js') {
@@ -303,7 +281,8 @@ koa.use(async (context, next) => {
                 const backend = new URL(info.backend);
                 const version = await (async function () {
                     try {
-                        const response = await fetch(`${argv.internal_backend ?? info.backend}/api/version`);
+                        const versionUrl = `${clientPath.getURL(Route.API, { backend: true })}/version`;
+                        const response = await fetch(versionUrl);
                         return JSON.parse(await response.text());
                     } catch (err) {}
                 })();
@@ -336,20 +315,17 @@ koa.use(async (context, next) => {
                 }
                 if (backend.hostname !== 'screeps.com') {
                     // Replace room-history URL
-                    const historyUrl = clientPath.getRoomHistoryURL();
                     text = text.replace(
                         /http:\/\/"\+s\.options\.host\+":"\+s\.options\.port\+"\/room-history/g,
-                        historyUrl,
+                        clientPath.getURL(Route.HISTORY),
                     );
 
                     // Replace official CDN with local assets
                     text = text.replace(/https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${info.backend}/assets`);
                 }
-            } else if (urlPath.startsWith('app2/main.')) {
-                const clientHost = clientPath.getHost();
-                text = text.replace(/"screeps\.com"/g, `"${clientHost}"`);
-                text = text.replace(/"screeps\.com\/season"/g, `"${clientHost}/season"`);
-                text = text.replace(/"https:\/\/screeps\.com"/g, `"http://${clientHost}/#!/register"`);
+
+                // Replace URLs with proxy client root path
+                text = text.replace(/https:\/\/screeps.com\/a\//g, clientPath.getURL(Route.ROOT));
             }
             return argv.beautify ? jsBeautify(text) : text;
         } else {

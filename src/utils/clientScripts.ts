@@ -1,5 +1,3 @@
-import { CodeStore } from './types';
-
 export function generateScriptTag(func: Function, args: { [key: string]: any }) {
     const scriptContent = func.toString();
     const firstBraceIndex = scriptContent.indexOf('{');
@@ -56,9 +54,10 @@ export function clientStartup(backend: string) {
     // The client will just fill this up with data until the application breaks.
     if (localStorage['users.code.activeWorld']?.length > 1024 * 1024) {
         try {
+            type Store = { timestamp: number };
             const code = JSON.parse(localStorage['users.code.activeWorld']);
             localStorage['users.code.activeWorld'] = JSON.stringify(
-                code.sort((a: CodeStore, b: CodeStore) => b.timestamp - a.timestamp).slice(0, 2),
+                code.sort((a: Store, b: Store) => b.timestamp - a.timestamp).slice(0, 2),
             );
         } catch (err) {
             delete localStorage['users.code.activeWorld'];
@@ -68,8 +67,16 @@ export function clientStartup(backend: string) {
     // Send the user to map after login from /register
     addEventListener('message', () => {
         setTimeout(() => {
-            if (localStorage.auth && localStorage.auth !== '"guest"' && document.location.hash === '#!/register') {
-                document.location.hash = '#!/';
+            if (localStorage.auth) {
+                const isGuestOrNull = localStorage.auth === '"guest"' || localStorage.auth === 'null';
+                const basePath = `/(${backend})/`;
+                if (isGuestOrNull && document.location.pathname === `${basePath}season/`) {
+                    // Season players must log in to the main server first (match the behavior of the official client)
+                    document.location.pathname = basePath;
+                } else if (!isGuestOrNull && document.location.hash === '#!/register') {
+                    // Redirect to the map
+                    document.location.hash = '#!/';
+                }
             }
         });
     });

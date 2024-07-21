@@ -11,7 +11,3 @@ export interface Server {
     api: string;
     subdomain?: string;
 }
-
-export interface CodeStore {
-    timestamp: number;
-}
