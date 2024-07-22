@@ -284,11 +284,6 @@ koa.use(async (context, next) => {
                 /<script[^>]*>[^>]*onRecaptchaLoad[^>]*<\/script>/g,
                 '<script>function onRecaptchaLoad(){}</script>',
             );
-
-            // TODO: replace URL in sidebar header with local proxy client path instead (below code doesn't work, maybe needs to be a client abuse script instead due to being angular-injected content rather than html source)
-            // Replace URLs with proxy client root path
-            // text = text.replace(/https:\/\/screeps.com\/a\//g, client.getURL(Route.ROOT));
-
             return text;
         } else if (urlPath === 'config.js') {
             let text = await file.async('text');
