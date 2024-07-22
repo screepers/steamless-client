@@ -1,6 +1,8 @@
 type Options = {
-    fullPath?: boolean;
+    full?: boolean;
+    prefix?: boolean;
     backend?: boolean;
+    base?: boolean;
 };
 
 export enum Route {
@@ -12,7 +14,7 @@ export enum Route {
     REGISTER = '/#!/register',
 }
 
-export class ClientPath {
+export class Client {
     private host: string;
     private basePath: string;
     private prefix: string;
@@ -40,11 +42,12 @@ export class ClientPath {
     }
 
     getHost = (opts?: Options) => {
-        const baseUrl = this.host + this.basePath;
+        const baseUrl = this.host + (opts?.base !== false ? this.basePath : '');
         return opts?.backend ? this.internal ?? this.backend ?? baseUrl : baseUrl;
     };
-    getBasePath = (opts?: Options) => (opts?.fullPath ? this.basePath : '');
-    getPath = (route: Route, opts?: Options) => this.getBasePath(opts) + this.prefix + route;
+    getBasePath = (opts?: Options) => (opts?.full ? this.basePath : '');
+    getPath = (route: Route, opts?: Options) =>
+        this.getBasePath(opts) + (opts?.prefix !== false ? this.prefix : '') + route;
     getURL = (route: Route, opts?: Options) =>
-        `http://${this.getHost(opts)}${this.getPath(route, { ...opts, fullPath: false })}`;
+        `http://${this.getHost(opts)}${this.getPath(route, { ...opts, full: false })}`;
 }

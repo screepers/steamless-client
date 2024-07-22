@@ -13,9 +13,9 @@ import { Transform } from 'stream';
 import { fileURLToPath, URL } from 'url';
 import chalk from 'chalk';
 import { getScreepsPath } from './utils/steamGamePath';
-import { removeRoomDecorations, clientStartup, generateScriptTag } from './utils/clientScripts';
+import { removeRoomDecorations, clientStartup, generateScriptTag, modifyClientAppMenu } from './utils/clientScripts';
 import { Server } from './utils/types';
-import { ClientPath, Route } from './utils/clientPath';
+import { Client, Route } from './utils/client';
 
 // Log welcome message
 console.log('🧩', chalk.yellowBright('Screepers Steamless Client'));
@@ -217,8 +217,10 @@ koa.use(async (context, next) => {
         return;
     }
 
-    const clientPath = new ClientPath({
-        host: context.header.host,
+    const clientHost = context.header.host;
+
+    const client = new Client({
+        host: clientHost,
         prefix,
         backend: argv.backend,
         server: info.backend,
@@ -227,52 +229,87 @@ koa.use(async (context, next) => {
     // Rewrite various payloads
     context.body = await (async function () {
         if (urlPath === 'index.html') {
-            let body = await file.async('text');
+            let text = await file.async('text');
+
+            const seasonLink =
+                isOfficial && !prefix
+                    ? `${client.getURL(Route.ROOT)}season/`
+                    : client.getURL(Route.ROOT, { prefix: false });
+
+            const ptrLink = isOfficial && !prefix ? `${client.getURL(Route.ROOT)}ptr/` : undefined;
+
+            function removeSubdomainFromLocalhost(host: string): string {
+                const parts = host.split('.');
+                const localhostIndex = parts.findIndex((p) => p.includes('localhost'));
+                if (localhostIndex !== -1) {
+                    host = parts[localhostIndex];
+                }
+                return host;
+            }
+
+            const serverListLink = argv.backend ? undefined : `http://${removeSubdomainFromLocalhost(clientHost)}/`;
+
             // Inject startup script
             const header = '<title>Screeps</title>';
             const replaceHeader = [
                 header,
-                generateScriptTag(clientStartup, {
-                    backend: info.backend,
-                }),
+                generateScriptTag(clientStartup, { backend: info.backend }),
                 generateScriptTag(removeRoomDecorations, { backend: info.backend }),
+                generateScriptTag(modifyClientAppMenu, { backend: info.backend, seasonLink, ptrLink, serverListLink }),
             ].join('\n');
-            body = body.replace(header, replaceHeader);
+            text = text.replace(header, replaceHeader);
 
             // Remove tracking pixels
-            body = body.replace(
+            text = text.replace(
                 /<script[^>]*>[^>]*xsolla[^>]*<\/script>/g,
                 '<script>xnt = new Proxy(() => xnt, { get: () => xnt })</script>',
             );
-            body = body.replace(
+            text = text.replace(
                 /<script[^>]*>[^>]*facebook[^>]*<\/script>/g,
                 '<script>fbq = new Proxy(() => fbq, { get: () => fbq })</script>',
             );
-            body = body.replace(
+            text = text.replace(
                 /<script[^>]*>[^>]*google[^>]*<\/script>/g,
                 '<script>ga = new Proxy(() => ga, { get: () => ga })</script>',
             );
-            body = body.replace(
+            text = text.replace(
                 /<script[^>]*>[^>]*mxpnl[^>]*<\/script>/g,
                 '<script>mixpanel = new Proxy(() => mixpanel, { get: () => mixpanel })</script>',
             );
-            body = body.replace(
+            text = text.replace(
                 /<script[^>]*>[^>]*twttr[^>]*<\/script>/g,
                 '<script>twttr = new Proxy(() => twttr, { get: () => twttr })</script>',
             );
-            body = body.replace(
+            text = text.replace(
                 /<script[^>]*>[^>]*onRecaptchaLoad[^>]*<\/script>/g,
                 '<script>function onRecaptchaLoad(){}</script>',
             );
-            return body;
+
+            // TODO: replace URL in sidebar header with local proxy client path instead (below code doesn't work, maybe needs to be a client abuse script instead due to being angular-injected content rather than html source)
+            // Replace URLs with proxy client root path
+            // text = text.replace(/https:\/\/screeps.com\/a\//g, client.getURL(Route.ROOT));
+
+            return text;
         } else if (urlPath === 'config.js') {
-            // Screeps server config
             let text = await file.async('text');
-            const opts = { fullPath: true };
-            text = text.replace(/(API_URL = ')[^']*/, `$1${clientPath.getPath(Route.API, opts)}/`);
-            text = text.replace(/(HISTORY_URL = ')[^']*/, `$1${clientPath.getPath(Route.HISTORY, opts)}/`);
-            text = text.replace(/(WEBSOCKET_URL = ')[^']*/, `$1${clientPath.getPath(Route.SOCKET, opts)}/`);
-            text = text.replace(/(PREFIX: ')[^']*/, `$1${prefix?.substring(1) || ''}`);
+            const opts = { full: true };
+
+            // Replace API_URL, HISTORY_URL, WEBSOCKET_URL, and PREFIX in the server config
+            const apiPath = client.getPath(Route.API, opts);
+            text = text.replace(/(API_URL = ')[^']*/, `$1${apiPath}/`);
+
+            const historyPath = client.getPath(Route.HISTORY, opts);
+            text = text.replace(/(HISTORY_URL = ')[^']*/, `$1${historyPath}/`);
+
+            const socketPath = client.getPath(Route.SOCKET, opts);
+            text = text.replace(/(WEBSOCKET_URL = ')[^']*/, `$1${socketPath}/`);
+
+            const prefixValue = prefix?.substring(1) || '';
+            text = text.replace(/(PREFIX: ')[^']*/, `$1${prefixValue}`);
+
+            const ptrValue = prefix === '/ptr' ? 'true' : 'false';
+            text = text.replace(/(PTR: )[^,]*/, `$1${ptrValue}`);
+
             return text;
         } else if (context.path.endsWith('.js')) {
             let text = await file.async('text');
@@ -281,12 +318,12 @@ koa.use(async (context, next) => {
                 const backend = new URL(info.backend);
                 const version = await (async function () {
                     try {
-                        const versionUrl = `${clientPath.getURL(Route.API, { backend: true })}/version`;
+                        const versionUrl = `${client.getURL(Route.API, { backend: true })}/version`;
                         const response = await fetch(versionUrl);
                         return JSON.parse(await response.text());
                     } catch (err) {}
                 })();
-                const officialLike =
+                const officialLike: boolean =
                     version?.serverData?.features?.some(
                         (f: { name: string }) => f.name.toLowerCase() === 'official-like',
                     ) ?? false;
@@ -317,7 +354,7 @@ koa.use(async (context, next) => {
                     // Replace room-history URL
                     text = text.replace(
                         /http:\/\/"\+s\.options\.host\+":"\+s\.options\.port\+"\/room-history/g,
-                        clientPath.getURL(Route.HISTORY),
+                        client.getURL(Route.HISTORY),
                     );
 
                     // Replace official CDN with local assets
@@ -325,7 +362,7 @@ koa.use(async (context, next) => {
                 }
 
                 // Replace URLs with proxy client root path
-                text = text.replace(/https:\/\/screeps.com\/a\//g, clientPath.getURL(Route.ROOT));
+                text = text.replace(/https:\/\/screeps.com\/a\//g, client.getURL(Route.ROOT));
             }
             return argv.beautify ? jsBeautify(text) : text;
         } else {
