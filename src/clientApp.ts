@@ -195,7 +195,7 @@ koa.use(async (context, next) => {
 // Serve client assets
 koa.use(async (context, next) => {
     const info = extract(context.path);
-    if (!info || !context.header.host) {
+    if (!info) {
         error('Unknown URL', chalk.dim(context.path));
         return;
     }
@@ -217,7 +217,7 @@ koa.use(async (context, next) => {
         return;
     }
 
-    const clientHost = context.header.host;
+    const clientHost = context.header.host || `${host}:${port}`;
 
     const client = new Client({
         host: clientHost,
