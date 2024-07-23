@@ -248,7 +248,7 @@ koa.use(async (context, next) => {
                                     // Inject `host`, `port`, and `official`
                                     src = `${src.substring(0, i)},
                                         host: ${JSON.stringify(backend.hostname)},
-                                        port: ${backend.port || '8080'},
+                                        port: ${backend.port || '80'},
                                         official: ${isOfficial || isOfficialLike},
                                     } ${src.substring(i + 1)}`;
                                 }
