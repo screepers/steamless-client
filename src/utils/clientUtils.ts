@@ -6,6 +6,18 @@ import fetch from 'node-fetch';
 import { type Client, Route } from './client';
 import { Server } from './types';
 
+export const mimeTypes = {
+    '.css': 'text/css',
+    '.html': 'text/html',
+    '.js': 'text/javascript',
+    '.map': 'application/json',
+    '.png': 'image/png',
+    '.svg': 'image/svg+xml',
+    '.ttf': 'font/ttf',
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+} as const;
+
 /**
  * Log a message to the console with error styling.
  */

@@ -20,6 +20,7 @@ import {
     generateScriptTag,
     getServerListConfig,
     extractBackend,
+    mimeTypes,
 } from './utils/clientUtils';
 import { clientAuth } from './inject/clientAuth';
 import { removeDecorations } from './inject/removeDecorations';
@@ -285,20 +286,8 @@ koa.use(async (context, next) => {
     })();
 
     // Set content type
-    context.set(
-        'Content-Type',
-        {
-            '.css': 'text/css',
-            '.html': 'text/html',
-            '.js': 'text/javascript',
-            '.map': 'application/json',
-            '.png': 'image/png',
-            '.svg': 'image/svg+xml',
-            '.ttf': 'font/ttf',
-            '.woff': 'font/woff',
-            '.woff2': 'font/woff2',
-        }[/\.[^.]+$/.exec(urlPath.toLowerCase())?.[0] ?? '.html']!,
-    );
+    const extension = (/\.[^.]+$/.exec(urlPath.toLowerCase())?.[0] ?? '.html') as keyof typeof mimeTypes;
+    context.set('Content-Type', mimeTypes[extension] ?? 'text/html');
 
     // We can safely cache explicitly-versioned resources forever
     if (context.request.query.bust) {
