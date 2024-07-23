@@ -1,3 +1,6 @@
+/**
+ * This script is used to display the status of a server by changing the color of an element.
+ */
 ((document) => {
     const setLoading = (elem: HTMLElement) => {
         elem.style.backgroundColor = 'transparent';

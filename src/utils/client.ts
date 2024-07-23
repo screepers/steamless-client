@@ -5,15 +5,20 @@ type Options = {
     base?: boolean;
 };
 
+/**
+ * Enum for the available routes in the Screeps Client
+ */
 export enum Route {
     ROOT = '/',
     API = '/api',
     ASSETS = '/assets',
     HISTORY = '/room-history',
     SOCKET = '/socket',
-    REGISTER = '/#!/register',
 }
 
+/**
+ * Class to generate URLs for the Screeps Client
+ */
 export class Client {
     private host: string;
     private basePath: string;
