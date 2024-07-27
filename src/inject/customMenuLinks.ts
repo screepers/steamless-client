@@ -39,7 +39,7 @@ export function customMenuLinks(backend: string, seasonLink: string, ptrLink?: s
                 return;
             }
 
-            if (href?.includes('mailto:')) {
+            if (href?.startsWith('mailto:')) {
                 if (serverListLink) {
                     link.setAttribute('href', serverListLink);
                     link.setAttribute('target', '_self');
@@ -72,7 +72,7 @@ export function customMenuLinks(backend: string, seasonLink: string, ptrLink?: s
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
                         const element = node as HTMLElement;
-                        const links = element.querySelectorAll('a[href*="facebook.com"]');
+                        const links = element.querySelectorAll('a[href^="mailto:"]');
                         if (links.length) {
                             shouldUpdate = true;
                             return;
