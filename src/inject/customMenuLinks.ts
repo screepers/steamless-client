@@ -19,7 +19,7 @@ export function customMenuLinks(backend: string, seasonLink: string, ptrLink?: s
             });
         }
 
-        const removeLinks = ['screeps.com/forum', 'twitter.com', 'mailto:'];
+        const removeLinks = ['screeps.com/forum', 'facebook.com', 'twitter.com'];
 
         appMenu?.querySelectorAll('a[href]').forEach((link) => {
             const href = link.getAttribute('href');
@@ -32,14 +32,14 @@ export function customMenuLinks(backend: string, seasonLink: string, ptrLink?: s
                 if (ptrLink) {
                     link.setAttribute('href', ptrLink);
                     const label = link.querySelector('div div');
-                    if (label) label.textContent = 'PTR';
+                    if (label) label.textContent = 'PTR Server';
                 } else {
                     link.remove();
                 }
                 return;
             }
 
-            if (href?.includes('facebook.com')) {
+            if (href?.includes('mailto:')) {
                 if (serverListLink) {
                     link.setAttribute('href', serverListLink);
                     link.setAttribute('target', '_self');

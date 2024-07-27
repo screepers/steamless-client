@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'url';
 import fetch from 'node-fetch';
 import { type Client, Route } from './client';
 import { Server } from './types';
+import { ServerResponse } from 'http';
 
 export const mimeTypes = {
     '.css': 'text/css',
@@ -23,6 +24,34 @@ export const mimeTypes = {
  */
 export function logError(...args: unknown[]) {
     console.error('❌', chalk.bold.red('Error'), ...args);
+}
+
+const errorMessages: Record<PropertyKey, string> = {
+    ECONNREFUSED: 'Connection refused by the target server.',
+    ETIMEDOUT: 'The request to the target server timed out.',
+    EHOSTUNREACH: 'The target server is unreachable.',
+    ENOTFOUND: 'The target server could not be found.',
+};
+
+interface ProxyError extends Error {
+    errno?: number;
+    code?: string;
+    syscall?: string;
+    address?: string;
+    port?: number;
+}
+
+/**
+ * Log proxy errors to the console with error styling.
+ */
+export function handleProxyError(err: ProxyError, res: ServerResponse) {
+    const message = errorMessages[err.code!] ?? 'An unknown error occurred.';
+    const target = `${err.address ?? ''}${err.port ? `:${err.port}` : ''}`;
+    logError(message, chalk.dim(target));
+
+    // Return a plain text response instead of json so the client will stop loading.
+    res.writeHead(500, { 'Content-Type': 'plain/text' });
+    res.end(['Error:', message, target].join(' '));
 }
 
 /**

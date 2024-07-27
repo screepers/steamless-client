@@ -21,30 +21,41 @@ import {
     getServerListConfig,
     extractBackend,
     mimeTypes,
+    handleProxyError,
 } from './utils/clientUtils';
 import { clientAuth } from './inject/clientAuth';
 import { removeDecorations } from './inject/removeDecorations';
 import { customMenuLinks } from './inject/customMenuLinks';
+import { ServerResponse } from 'http';
 
-// Log welcome message
-console.log('🧩', chalk.yellowBright('Screepers Steamless Client'));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.join(__dirname, '..');
+const packageJsonPath = path.resolve(rootDir, 'package.json');
+const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+const version = packageJson.version || '1.0.0';
 
 // Parse program arguments
 const argv = (() => {
     const parser = new ArgumentParser();
-    parser.add_argument('--beautify', { action: 'store_true', default: false });
+    parser.add_argument('--version', '-v', { action: 'version', version: `v${version}` });
     parser.add_argument('--package', { nargs: '?', type: 'str' });
+    parser.add_argument('--host', { nargs: '?', type: 'str' });
     parser.add_argument('--port', { nargs: '?', type: 'int' });
     parser.add_argument('--backend', { nargs: '?', type: 'str' });
-    parser.add_argument('--host', { nargs: '?', type: 'str' });
     parser.add_argument('--internal_backend', { nargs: '?', type: 'str' });
     parser.add_argument('--server_list', { nargs: '?', type: 'str' });
+    parser.add_argument('--beautify', { action: 'store_false', default: false });
+    parser.add_argument('--debug', { action: 'store_false', default: false });
     return parser.parse_args();
 })();
 
+// Log welcome message
+console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`));
+
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
-proxy.on('error', (err) => logError(err));
+proxy.on('error', (err, _req, res) => handleProxyError(err, res as ServerResponse));
 
 const exitOnPackageError = () => {
     logError('Could not find the Screeps "package.nw".');
@@ -74,12 +85,11 @@ const koa = new Koa();
 const port = argv.port ?? 8080;
 const host = argv.host ?? 'localhost';
 const server = koa.listen(port, host);
-server.on('error', (err) => logError(err));
+server.on('error', (err) => {
+    if (argv.debug) logError(err);
+});
 
 // Get system path for public files dir
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rootDir = path.join(__dirname, '..');
 const indexFile = 'index.ejs';
 
 // Setup views for rendering ejs files
@@ -327,7 +337,9 @@ server.on('upgrade', (req, socket, head) => {
         proxy.ws(req, socket, head, {
             target: argv.internal_backend ?? info.backend,
         });
-        socket.on('error', (err) => logError(err));
+        socket.on('error', (err) => {
+            if (argv.debug) logError(err);
+        });
     } else {
         socket.end();
     }
