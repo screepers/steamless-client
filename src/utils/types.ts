@@ -12,3 +12,11 @@ export interface Server {
     api: string;
     subdomain?: string;
 }
+
+export interface ServerError extends Error {
+    errno?: number;
+    code?: string;
+    syscall?: string;
+    address?: string;
+    port?: number;
+}

@@ -1,10 +1,10 @@
 import chalk from 'chalk';
 import path from 'path';
+import fetch from 'node-fetch';
 import { existsSync, promises as fs } from 'fs';
 import { fileURLToPath, URL } from 'url';
-import fetch from 'node-fetch';
 import { type Client, Route } from './client';
-import { Server } from './types';
+import { ServerError, Server } from './types';
 import { ServerResponse } from 'http';
 
 export const mimeTypes = {
@@ -26,32 +26,38 @@ export function logError(...args: unknown[]) {
     console.error('❌', chalk.bold.red('Error'), ...args);
 }
 
-const errorMessages: Record<PropertyKey, string> = {
+const serverErrors: Record<PropertyKey, string> = {
+    EADDRINUSE: 'The port is already in use by another application.',
     ECONNREFUSED: 'Connection refused by the target server.',
     ETIMEDOUT: 'The request to the target server timed out.',
     EHOSTUNREACH: 'The target server is unreachable.',
-    ENOTFOUND: 'The target server could not be found.',
+    ENOTFOUND: 'DNS lookup failed. The target server could not be found.',
+    EACCES: 'Permission denied. Please check your privileges.',
+    EADDRNOTAVAIL: 'The specified address is not available.',
+    ECONNRESET: 'Connection reset by peer.',
+    ENETUNREACH: 'Network is unreachable.',
 };
-
-interface ProxyError extends Error {
-    errno?: number;
-    code?: string;
-    syscall?: string;
-    address?: string;
-    port?: number;
-}
 
 /**
  * Log proxy errors to the console with error styling.
  */
-export function handleProxyError(err: ProxyError, res: ServerResponse) {
-    const message = errorMessages[err.code!] ?? 'An unknown error occurred.';
+export function handleProxyError(err: ServerError, res: ServerResponse) {
+    const message = serverErrors[err.code!] ?? 'An unknown error occurred.';
     const target = `${err.address ?? ''}${err.port ? `:${err.port}` : ''}`;
     logError(message, chalk.dim(target));
 
     // Return a plain text response instead of json so the client will stop loading.
     res.writeHead(500, { 'Content-Type': 'plain/text' });
     res.end(['Error:', message, target].join(' '));
+}
+
+/**
+ * Log server errors to the console with error styling.
+ */
+export function handleServerError(err: ServerError) {
+    const message = serverErrors[err.code!] ?? err.code ?? 'An unknown error occurred.';
+    const target = `${err.address ?? ''}${err.port ? `:${err.port}` : ''}`;
+    logError(message, chalk.dim(target));
 }
 
 /**

@@ -22,6 +22,7 @@ import {
     extractBackend,
     mimeTypes,
     handleProxyError,
+    handleServerError,
 } from './utils/clientUtils';
 import { clientAuth } from './inject/clientAuth';
 import { removeDecorations } from './inject/removeDecorations';
@@ -85,9 +86,8 @@ const koa = new Koa();
 const port = argv.port ?? 8080;
 const host = argv.host ?? 'localhost';
 const server = koa.listen(port, host);
-server.on('error', (err) => {
-    if (argv.debug) logError(err);
-});
+server.on('error', handleServerError);
+server.on('listening', () => console.log('🌐', chalk.dim('Ready >'), chalk.white(`http://${host}:${port}/`)));
 
 // Get system path for public files dir
 const indexFile = 'index.ejs';
@@ -350,6 +350,3 @@ const cleanup = () => process.exit(1);
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
 process.on('exit', () => server.close());
-
-// Log server information
-console.log('🌐', chalk.dim('Ready >'), chalk.white(`http://${host}:${port}/`));
