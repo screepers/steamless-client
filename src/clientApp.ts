@@ -1,16 +1,17 @@
 #!/usr/bin/env node
-import { ArgumentParser } from 'argparse';
-import { createReadStream, existsSync, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
+import Koa from 'koa';
+import koaConditionalGet from 'koa-conditional-get';
+import views from '@ladjs/koa-views';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
-import Koa from 'koa';
-import views from '@ladjs/koa-views';
-import koaConditionalGet from 'koa-conditional-get';
-import path from 'path';
-import { Transform } from 'stream';
-import { fileURLToPath, URL } from 'url';
 import chalk from 'chalk';
+import path from 'path';
+import { ArgumentParser } from 'argparse';
+import { createReadStream, existsSync, promises as fs } from 'fs';
+import { fileURLToPath, URL } from 'url';
+import { ServerResponse } from 'http';
+import { Transform } from 'stream';
 import { Client, Route } from './utils/client';
 import { getScreepsPath } from './utils/gamePath';
 import {
@@ -27,8 +28,8 @@ import {
 import { clientAuth } from './inject/clientAuth';
 import { removeDecorations } from './inject/removeDecorations';
 import { customMenuLinks } from './inject/customMenuLinks';
-import { ServerResponse } from 'http';
 
+// Get the app directory and version
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.join(__dirname, '..');
@@ -121,7 +122,7 @@ const publicFiles = [
 ];
 
 // Serve public files
-koa.use(async (context, next) => {
+koa.use((context, next) => {
     if (argv.backend) return next(); // Skip if backend is specified
 
     const urlPath = context.path.substring(1);
@@ -139,10 +140,7 @@ koa.use(async (context, next) => {
 // Serve client assets
 koa.use(async (context, next) => {
     const info = extractBackend(context.path, argv.backend);
-    if (!info) {
-        logError('Unknown URL', chalk.dim(context.path));
-        return;
-    }
+    if (!info) return;
 
     const isOfficial = info.backend === 'https://screeps.com';
     const prefix = isOfficial ? info.endpoint.match(/^\/(season|ptr)/)?.[0] : undefined;
@@ -151,15 +149,11 @@ koa.use(async (context, next) => {
     const urlPath = endpointFilePath === '/' ? 'index.html' : endpointFilePath.substring(1);
 
     const file = zip.files[urlPath];
-    if (!file) {
-        return next();
-    }
+    if (!file) return next();
 
     // Check cached response based on zip file modification
     context.lastModified = lastModified;
-    if (context.fresh) {
-        return;
-    }
+    if (context.fresh) return;
 
     const clientHost = context.header.host || `${host}:${port}`;
 
@@ -255,11 +249,11 @@ koa.use(async (context, next) => {
                                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                 const holder = new Function(payload);
                                 if (payload.includes('apiUrl')) {
-                                    // Inject `host`, `port`, and `official`
+                                    // Inject host, port, and official
                                     src = `${src.substring(0, i)},
                                         host: ${JSON.stringify(backend.hostname)},
                                         port: ${backend.port || '80'},
-                                        official: ${isOfficial || isOfficialLike},
+                                        official: ${isOfficialLike},
                                     } ${src.substring(i + 1)}`;
                                 }
                                 break;
@@ -306,7 +300,7 @@ koa.use(async (context, next) => {
 });
 
 // Proxy API requests to Screeps server
-koa.use(async (context, next) => {
+koa.use((context, next) => {
     if (context.header.upgrade) {
         context.respond = false;
         return;

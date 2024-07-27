@@ -3,9 +3,9 @@ import path from 'path';
 import fetch from 'node-fetch';
 import { existsSync, promises as fs } from 'fs';
 import { fileURLToPath, URL } from 'url';
+import { ServerResponse } from 'http';
 import { type Client, Route } from './client';
 import { ServerError, Server } from './types';
-import { ServerResponse } from 'http';
 
 export const mimeTypes = {
     '.css': 'text/css',
