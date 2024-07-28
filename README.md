@@ -2,11 +2,12 @@
 
 ### Overview
 
-The Screepers Steamless Client is a web proxy that allows you to run [Screeps: World](https://store.steampowered.com/app/464350/Screeps/), a game purchased via Steam, directly in your browser. It overcomes compatibility issues with the official Screeps client on many macOS devices. This client uses the Screeps files installed with Steam and enables gameplay on official and private servers across macOS, Linux, and Windows using the browser of your choice.
+The Screepers Steamless Client is a web proxy for the [Screeps World](https://store.steampowered.com/app/464350/Screeps/) game client. It allows you to run Screeps in your web browser and works with macOS, Linux and Windows setups.
 
 ## Requirements
 
-Node.js v20+
+- Node.js v20+
+- Screeps World (installed using Steam)
 
 ## Installation
 
@@ -27,7 +28,7 @@ screepers-steamless-client
 
 View the server list page at http://localhost:8080/. This address can be changed with the `--host` and `--port` arguments.
 
-Different servers can be accessed from the server list page, or using the url format `http://localhost:8080/(SERVER_ADDRESS)/`
+Different servers can be accessed from the server list page, or using the url format `http://localhost:8080/(BACKEND_ADDRESS)/`
 
 - For the official server: http://localhost:8080/(https://screeps.com)/
 
@@ -48,6 +49,9 @@ All of the command line arguments are optional.
 - `--internal_backend` &mdash; Used to configure an internal backend url. If provided, the client app uses this address to reference the internal server endpoint.
 - `--server_list` &mdash; Used to set the path to a custom server list json config file.
 - `--beautify` &mdash; Formats .js files loaded in the client for debugging.
+- `--debug` &mdash; Display verbose errors for development.
+- `-v` , `--version` &mdash; Display the version number.
+- `-h` , `--help` &mdash; Display the help message.
 
 ## Argument Examples
 

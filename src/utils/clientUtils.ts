@@ -41,10 +41,10 @@ const serverErrors: Record<PropertyKey, string> = {
 /**
  * Log proxy errors to the console with error styling.
  */
-export function handleProxyError(err: ServerError, res: ServerResponse) {
+export function handleProxyError(err: ServerError, res: ServerResponse, debug?: boolean) {
     const message = serverErrors[err.code!] ?? 'An unknown error occurred.';
     const target = `${err.address ?? ''}${err.port ? `:${err.port}` : ''}`;
-    logError(message, chalk.dim(target));
+    logError(message, chalk.dim(target), ...(debug ? ['\n', err] : []));
 
     // Return a plain text response instead of json so the client will stop loading.
     res.writeHead(500, { 'Content-Type': 'plain/text' });
@@ -54,10 +54,10 @@ export function handleProxyError(err: ServerError, res: ServerResponse) {
 /**
  * Log server errors to the console with error styling.
  */
-export function handleServerError(err: ServerError) {
+export function handleServerError(err: ServerError, debug?: boolean) {
     const message = serverErrors[err.code!] ?? err.code ?? 'An unknown error occurred.';
     const target = `${err.address ?? ''}${err.port ? `:${err.port}` : ''}`;
-    logError(message, chalk.dim(target));
+    logError(message, chalk.dim(target), ...(debug ? ['\n', err] : []));
 }
 
 /**

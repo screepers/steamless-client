@@ -36,19 +36,20 @@ const rootDir = path.join(__dirname, '..');
 const packageJsonPath = path.resolve(rootDir, 'package.json');
 const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
 const version = packageJson.version || '1.0.0';
+const arrow = '\u2192';
 
 // Parse program arguments
 const argv = (() => {
     const parser = new ArgumentParser();
-    parser.add_argument('--version', '-v', { action: 'version', version: `v${version}` });
+    parser.add_argument('-v', '--version', { action: 'version', version: `v${version}` });
     parser.add_argument('--package', { nargs: '?', type: 'str' });
     parser.add_argument('--host', { nargs: '?', type: 'str' });
     parser.add_argument('--port', { nargs: '?', type: 'int' });
     parser.add_argument('--backend', { nargs: '?', type: 'str' });
     parser.add_argument('--internal_backend', { nargs: '?', type: 'str' });
     parser.add_argument('--server_list', { nargs: '?', type: 'str' });
-    parser.add_argument('--beautify', { action: 'store_false', default: false });
-    parser.add_argument('--debug', { action: 'store_false', default: false });
+    parser.add_argument('--beautify', { action: 'store_true', default: false });
+    parser.add_argument('--debug', { action: 'store_true', default: false });
     return parser.parse_args();
 })();
 
@@ -57,11 +58,14 @@ console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`)
 
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
-proxy.on('error', (err, _req, res) => handleProxyError(err, res as ServerResponse));
+proxy.on('error', (err, _req, res) => handleProxyError(err, res as ServerResponse, argv.debug));
 
 const exitOnPackageError = () => {
-    logError('Could not find the Screeps "package.nw".');
-    logError('Use the "--package" argument to specify the path to the "package.nw" file.');
+    if (argv.package) {
+        logError(`Could not find the Screeps "package.nw" at the path provided.`);
+    } else {
+        logError('Use the "--package" argument to specify the path to the Screeps "package.nw" file.');
+    }
     process.exit(1);
 };
 
@@ -69,7 +73,7 @@ const exitOnPackageError = () => {
 const readPackageData = async () => {
     const pkgPath = argv.package ?? (await getScreepsPath());
     if (!pkgPath || !existsSync(pkgPath)) exitOnPackageError();
-    console.log('📦', chalk.dim('Package >'), chalk.gray(pkgPath));
+    console.log('📦', chalk.dim('Package', arrow), chalk.gray(pkgPath));
     return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch(exitOnPackageError);
 };
 
@@ -87,8 +91,8 @@ const koa = new Koa();
 const port = argv.port ?? 8080;
 const host = argv.host ?? 'localhost';
 const server = koa.listen(port, host);
-server.on('error', handleServerError);
-server.on('listening', () => console.log('🌐', chalk.dim('Ready >'), chalk.white(`http://${host}:${port}/`)));
+server.on('error', (err) => handleServerError(err, argv.debug));
+server.on('listening', () => console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${host}:${port}/`)));
 
 // Get system path for public files dir
 const indexFile = 'index.ejs';
