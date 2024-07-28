@@ -1,3 +1,10 @@
+declare global {
+    interface Window {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        angular: any;
+    }
+}
+
 export interface Server {
     type: string;
     name: string;
@@ -6,6 +13,10 @@ export interface Server {
     subdomain?: string;
 }
 
-export interface CodeStore {
-    timestamp: number;
+export interface ServerError extends Error {
+    errno?: number;
+    code?: string;
+    syscall?: string;
+    address?: string;
+    port?: number;
 }

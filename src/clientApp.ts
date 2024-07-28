@@ -1,66 +1,71 @@
 #!/usr/bin/env node
-import { ArgumentParser } from 'argparse';
-import { createReadStream, existsSync, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
+import Koa from 'koa';
+import koaConditionalGet from 'koa-conditional-get';
+import views from '@ladjs/koa-views';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
-import Koa from 'koa';
-import views from '@ladjs/koa-views';
-import koaConditionalGet from 'koa-conditional-get';
-import fetch from 'node-fetch';
-import path from 'path';
-import { Transform } from 'stream';
-import { fileURLToPath, URL } from 'url';
 import chalk from 'chalk';
-import { getScreepsPath } from './utils/steamGamePath';
-import { getStartupScript } from './utils/startupScript';
-import { error } from './utils/log';
-import { Server } from './utils/types';
+import path from 'path';
+import { ArgumentParser } from 'argparse';
+import { createReadStream, existsSync, promises as fs } from 'fs';
+import { fileURLToPath, URL } from 'url';
+import { ServerResponse } from 'http';
+import { Transform } from 'stream';
+import { Client, Route } from './utils/client';
+import { getScreepsPath } from './utils/gamePath';
+import {
+    logError,
+    isOfficialLikeVersion,
+    trimLocalSubdomain,
+    generateScriptTag,
+    getServerListConfig,
+    extractBackend,
+    mimeTypes,
+    handleProxyError,
+    handleServerError,
+} from './utils/clientUtils';
+import { clientAuth } from './inject/clientAuth';
+import { removeDecorations } from './inject/removeDecorations';
+import { customMenuLinks } from './inject/customMenuLinks';
 
-// Log welcome message
-console.log('🧩', chalk.yellowBright('Screepers Steamless Client'));
+// Get the app directory and version
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.join(__dirname, '..');
+const packageJsonPath = path.resolve(rootDir, 'package.json');
+const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+const version = packageJson.version || '1.0.0';
+const arrow = '\u2192';
 
 // Parse program arguments
-const argv = (function () {
+const argv = (() => {
     const parser = new ArgumentParser();
-    parser.add_argument('--beautify', {
-        action: 'store_true',
-        default: false,
-    });
-    parser.add_argument('--package', {
-        nargs: '?',
-        type: 'str',
-    });
-    parser.add_argument('--port', {
-        nargs: '?',
-        type: 'int',
-    });
-    parser.add_argument('--backend', {
-        nargs: '?',
-        type: 'str',
-    });
-    parser.add_argument('--host', {
-        nargs: '?',
-        type: 'str',
-    });
-    parser.add_argument('--internal_backend', {
-        nargs: '?',
-        type: 'str',
-    });
-    parser.add_argument('--server_list', {
-        nargs: '?',
-        type: 'str',
-    });
+    parser.add_argument('-v', '--version', { action: 'version', version: `v${version}` });
+    parser.add_argument('--package', { nargs: '?', type: 'str' });
+    parser.add_argument('--host', { nargs: '?', type: 'str' });
+    parser.add_argument('--port', { nargs: '?', type: 'int' });
+    parser.add_argument('--backend', { nargs: '?', type: 'str' });
+    parser.add_argument('--internal_backend', { nargs: '?', type: 'str' });
+    parser.add_argument('--server_list', { nargs: '?', type: 'str' });
+    parser.add_argument('--beautify', { action: 'store_true', default: false });
+    parser.add_argument('--debug', { action: 'store_true', default: false });
     return parser.parse_args();
 })();
 
+// Log welcome message
+console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`));
+
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
-proxy.on('error', (err) => error(err));
+proxy.on('error', (err, _req, res) => handleProxyError(err, res as ServerResponse, argv.debug));
 
 const exitOnPackageError = () => {
-    error('Could not find the Screeps "package.nw".');
-    error('Use the "--package" argument to specify the path to the "package.nw" file.');
+    if (argv.package) {
+        logError(`Could not find the Screeps "package.nw" at the path provided.`);
+    } else {
+        logError('Use the "--package" argument to specify the path to the Screeps "package.nw" file.');
+    }
     process.exit(1);
 };
 
@@ -68,7 +73,7 @@ const exitOnPackageError = () => {
 const readPackageData = async () => {
     const pkgPath = argv.package ?? (await getScreepsPath());
     if (!pkgPath || !existsSync(pkgPath)) exitOnPackageError();
-    console.log('📦', chalk.dim('Package >'), chalk.gray(pkgPath));
+    console.log('📦', chalk.dim('Package', arrow), chalk.gray(pkgPath));
     return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch(exitOnPackageError);
 };
 
@@ -81,70 +86,16 @@ await zip.loadAsync(data);
 // HTTP header is only accurate to the minute
 const lastModified = stat.mtime;
 
-// Set up koa server
+// Set up web server
 const koa = new Koa();
 const port = argv.port ?? 8080;
 const host = argv.host ?? 'localhost';
 const server = koa.listen(port, host);
-server.on('error', (err) => error(err));
-
-// Extract backend and endpoint from URL
-const extract = (url: string) => {
-    if (argv.backend) {
-        return {
-            backend: argv.backend.replace(/\/+$/, ''),
-            endpoint: url,
-        };
-    }
-    const groups = /^\/\((?<backend>[^)]+)\)(?<endpoint>\/.*)$/.exec(url)?.groups;
-    if (groups) {
-        return {
-            backend: groups.backend.replace(/\/+$/, ''),
-            endpoint: groups.endpoint,
-        };
-    }
-};
+server.on('error', (err) => handleServerError(err, argv.debug));
+server.on('listening', () => console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${host}:${port}/`)));
 
 // Get system path for public files dir
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rootDir = path.join(__dirname, '..');
 const indexFile = 'index.ejs';
-
-const getServerListConfig = async () => {
-    let serverListPath = argv.server_list;
-    if (!serverListPath) {
-        const serverListFile = 'server_list.json';
-        serverListPath = path.join(__dirname, `../settings/${serverListFile}`);
-        if (!existsSync(serverListPath)) {
-            serverListPath = path.join(__dirname, serverListFile);
-        }
-    }
-
-    const serverConfig: Server[] = JSON.parse(await fs.readFile(serverListPath, 'utf-8'));
-    const serverTypes = Array.from(new Set(serverConfig.map((server) => server.type)));
-    const serverList = serverTypes.map((type) => {
-        const serversOfType = serverConfig
-            .filter((server) => server.type === type)
-            .map((server) => {
-                const subdomain = host === 'localhost' && server.subdomain ? `${server.subdomain}.` : '';
-                const { origin, pathname } = new URL(server.url);
-                const urlpath = pathname.endsWith('/') ? pathname : `${pathname}/`;
-
-                const url = `http://${subdomain}${host}:${port}/(${origin})${urlpath}`;
-                const api = `http://${host}:${port}/(${origin})${urlpath}api/version`;
-                return { ...server, url, api };
-            });
-
-        return {
-            name: type.charAt(0).toUpperCase() + type.slice(1),
-            logo: type === 'official' ? `http://${host}:${port}/(file)/logotype.svg` : undefined,
-            servers: serversOfType,
-        };
-    });
-
-    return serverList;
-};
 
 // Setup views for rendering ejs files
 koa.use(views(path.join(__dirname, '../views'), { extension: 'ejs' }));
@@ -157,7 +108,7 @@ koa.use(async (context, next) => {
     if (argv.backend) return next(); // Skip if backend is specified
 
     if (['/', 'index.html'].includes(context.path)) {
-        const serverList = await getServerListConfig();
+        const serverList = await getServerListConfig(host, port, argv.server_list);
         if (serverList.length) {
             await context.render(indexFile, { serverList });
             return;
@@ -175,7 +126,7 @@ const publicFiles = [
 ];
 
 // Serve public files
-koa.use(async (context, next) => {
+koa.use((context, next) => {
     if (argv.backend) return next(); // Skip if backend is specified
 
     const urlPath = context.path.substring(1);
@@ -192,129 +143,143 @@ koa.use(async (context, next) => {
 
 // Serve client assets
 koa.use(async (context, next) => {
-    const info = extract(context.path);
-    if (!info) {
-        error('Unknown URL', chalk.dim(context.path));
-        return;
-    }
+    const info = extractBackend(context.path, argv.backend);
+    if (!info) return;
 
-    const urlPath = info.endpoint === '/' ? 'index.html' : info.endpoint.substring(1);
+    const isOfficial = info.backend === 'https://screeps.com';
+    const prefix = isOfficial ? info.endpoint.match(/^\/(season|ptr)/)?.[0] : undefined;
+
+    const endpointFilePath = prefix ? info.endpoint.replace(prefix, '') : info.endpoint;
+    const urlPath = endpointFilePath === '/' ? 'index.html' : endpointFilePath.substring(1);
+
     const file = zip.files[urlPath];
-    if (!file) {
-        return next();
-    }
+    if (!file) return next();
 
     // Check cached response based on zip file modification
     context.lastModified = lastModified;
-    if (context.fresh) {
-        return;
-    }
+    if (context.fresh) return;
+
+    const clientHost = context.header.host || `${host}:${port}`;
+
+    const client = new Client({
+        host: clientHost,
+        prefix,
+        backend: argv.backend,
+        server: info.backend,
+    });
 
     // Rewrite various payloads
     context.body = await (async function () {
         if (urlPath === 'index.html') {
-            let body = await file.async('text');
+            let src = await file.async('text');
+
+            // Client app menu links
+            const seasonLink =
+                isOfficial && !prefix
+                    ? `${client.getURL(Route.ROOT)}season/`
+                    : client.getURL(Route.ROOT, { prefix: false });
+            const ptrLink = isOfficial && !prefix ? `${client.getURL(Route.ROOT)}ptr/` : undefined;
+            const serverListLink = argv.backend ? undefined : `http://${trimLocalSubdomain(clientHost)}/`;
+
             // Inject startup script
             const header = '<title>Screeps</title>';
-            body = body.replace(header, getStartupScript(info.backend) + header);
+            const replaceHeader = [
+                header,
+                generateScriptTag(clientAuth, { backend: info.backend }),
+                generateScriptTag(removeDecorations, { backend: info.backend }),
+                generateScriptTag(customMenuLinks, { backend: info.backend, seasonLink, ptrLink, serverListLink }),
+            ].join('\n');
+            src = src.replace(header, replaceHeader);
+
             // Remove tracking pixels
-            body = body.replace(
+            src = src.replace(
                 /<script[^>]*>[^>]*xsolla[^>]*<\/script>/g,
                 '<script>xnt = new Proxy(() => xnt, { get: () => xnt })</script>',
             );
-            body = body.replace(
+            src = src.replace(
                 /<script[^>]*>[^>]*facebook[^>]*<\/script>/g,
                 '<script>fbq = new Proxy(() => fbq, { get: () => fbq })</script>',
             );
-            body = body.replace(
+            src = src.replace(
                 /<script[^>]*>[^>]*google[^>]*<\/script>/g,
                 '<script>ga = new Proxy(() => ga, { get: () => ga })</script>',
             );
-            body = body.replace(
+            src = src.replace(
                 /<script[^>]*>[^>]*mxpnl[^>]*<\/script>/g,
                 '<script>mixpanel = new Proxy(() => mixpanel, { get: () => mixpanel })</script>',
             );
-            body = body.replace(
+            src = src.replace(
                 /<script[^>]*>[^>]*twttr[^>]*<\/script>/g,
                 '<script>twttr = new Proxy(() => twttr, { get: () => twttr })</script>',
             );
-            body = body.replace(
+            src = src.replace(
                 /<script[^>]*>[^>]*onRecaptchaLoad[^>]*<\/script>/g,
                 '<script>function onRecaptchaLoad(){}</script>',
             );
-            return body;
+            return src;
         } else if (urlPath === 'config.js') {
-            const basePath = argv.backend ? '' : `/(${info.backend})`;
-            const history = `${basePath}/room-history/`;
-            const api = `${basePath}/api/`;
-            const socket = `${basePath}/socket/`;
-            // Screeps server config
-            return `
-                var HISTORY_URL = '${history}';
-                var API_URL = '${api}';
-                var WEBSOCKET_URL = '${socket}';
-                var CONFIG = {
-                    API_URL,
-                    HISTORY_URL,
-                    WEBSOCKET_URL,
-                    PREFIX: '',
-                    IS_PTR: false,
-                    DEBUG: false,
-                    XSOLLA_SANDBOX: false,
-                };
-            `;
+            let src = await file.async('text');
+            const opts = { full: true };
+
+            // Replace API_URL, HISTORY_URL, WEBSOCKET_URL, and PREFIX in the server config
+            const apiPath = client.getPath(Route.API, opts);
+            src = src.replace(/(API_URL = ')[^']*/, `$1${apiPath}/`);
+
+            const historyPath = client.getPath(Route.HISTORY, opts);
+            src = src.replace(/(HISTORY_URL = ')[^']*/, `$1${historyPath}/`);
+
+            const socketPath = client.getPath(Route.SOCKET, opts);
+            src = src.replace(/(WEBSOCKET_URL = ')[^']*/, `$1${socketPath}/`);
+
+            const prefixValue = prefix?.substring(1) || '';
+            src = src.replace(/(PREFIX: ')[^']*/, `$1${prefixValue}`);
+
+            const ptrValue = prefix === '/ptr' ? 'true' : 'false';
+            src = src.replace(/(PTR: )[^,]*/, `$1${ptrValue}`);
+
+            return src;
         } else if (context.path.endsWith('.js')) {
-            let text = await file.async('text');
+            let src = await file.async('text');
             if (urlPath === 'build.min.js') {
                 // Load backend info from underlying server
                 const backend = new URL(info.backend);
-                const version = await (async function () {
-                    try {
-                        const response = await fetch(`${argv.internal_backend ?? info.backend}/api/version`);
-                        return JSON.parse(await response.text());
-                    } catch (err) {}
-                })();
-                const officialLike =
-                    version?.serverData?.features?.some(
-                        (f: { name: string }) => f.name.toLowerCase() === 'official-like',
-                    ) ?? false;
-                const official = backend.hostname === 'screeps.com' || officialLike;
-
+                const isOfficialLike = isOfficial || (await isOfficialLikeVersion(client));
                 // Look for server options payload in build information
-                for (const match of text.matchAll(/\boptions=\{/g)) {
-                    for (let i = match.index!; i < text.length; ++i) {
-                        if (text.charAt(i) === '}') {
+                for (const match of src.matchAll(/\boptions=\{/g)) {
+                    for (let i = match.index!; i < src.length; ++i) {
+                        if (src.charAt(i) === '}') {
                             try {
-                                const payload = text.substring(match.index!, i + 1);
+                                const payload = src.substring(match.index!, i + 1);
                                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                 const holder = new Function(payload);
                                 if (payload.includes('apiUrl')) {
-                                    // Inject `host`, `port`, and `official`
-                                    text = `${text.substring(0, i)},
+                                    // Inject host, port, and official
+                                    src = `${src.substring(0, i)},
                                         host: ${JSON.stringify(backend.hostname)},
                                         port: ${backend.port || '80'},
-                                        official: ${official},
-                                    } ${text.substring(i + 1)}`;
+                                        official: ${isOfficialLike},
+                                    } ${src.substring(i + 1)}`;
                                 }
                                 break;
                             } catch (err) {}
                         }
                     }
                 }
-                if (backend.hostname !== 'screeps.com') {
+                if (!isOfficial) {
                     // Replace room-history URL
-                    const basePath = argv.backend ? '' : `/(${info.backend})`;
-                    const historyUrl = `http://${host}:${port}${basePath}/room-history`;
-                    text = text.replace(
+                    src = src.replace(
                         /http:\/\/"\+s\.options\.host\+":"\+s\.options\.port\+"\/room-history/g,
-                        historyUrl,
+                        client.getURL(Route.HISTORY),
                     );
 
                     // Replace official CDN with local assets
-                    text = text.replace(/https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${info.backend}/assets`);
+                    src = src.replace(/https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${info.backend}/assets`);
                 }
+
+                // Replace URLs with local client paths
+                src = src.replace(/https:\/\/screeps.com\/a\//g, client.getURL(Route.ROOT));
             }
-            return argv.beautify ? jsBeautify(text) : text;
+            return argv.beautify ? jsBeautify(src) : src;
         } else {
             // JSZip doesn't implement their read stream correctly and it causes EPIPE crashes. Pass it
             // through a no-op transform stream first to iron that out.
@@ -329,20 +294,8 @@ koa.use(async (context, next) => {
     })();
 
     // Set content type
-    context.set(
-        'Content-Type',
-        {
-            '.css': 'text/css',
-            '.html': 'text/html',
-            '.js': 'text/javascript',
-            '.map': 'application/json',
-            '.png': 'image/png',
-            '.svg': 'image/svg+xml',
-            '.ttf': 'font/ttf',
-            '.woff': 'font/woff',
-            '.woff2': 'font/woff2',
-        }[/\.[^.]+$/.exec(urlPath.toLowerCase())?.[0] ?? '.html']!,
-    );
+    const extension = (/\.[^.]+$/.exec(urlPath.toLowerCase())?.[0] ?? '.html') as keyof typeof mimeTypes;
+    context.set('Content-Type', mimeTypes[extension] ?? 'text/html');
 
     // We can safely cache explicitly-versioned resources forever
     if (context.request.query.bust) {
@@ -351,13 +304,13 @@ koa.use(async (context, next) => {
 });
 
 // Proxy API requests to Screeps server
-koa.use(async (context, next) => {
+koa.use((context, next) => {
     if (context.header.upgrade) {
         context.respond = false;
         return;
     }
 
-    const info = extract(context.url);
+    const info = extractBackend(context.url, argv.backend);
     if (info) {
         context.respond = false;
         context.req.url = info.endpoint;
@@ -376,13 +329,15 @@ koa.use(async (context, next) => {
 
 // Proxy WebSocket requests
 server.on('upgrade', (req, socket, head) => {
-    const info = extract(req.url!);
+    const info = extractBackend(req.url!, argv.backend);
     if (info && req.headers.upgrade?.toLowerCase() === 'websocket') {
         req.url = info.endpoint;
         proxy.ws(req, socket, head, {
             target: argv.internal_backend ?? info.backend,
         });
-        socket.on('error', (err) => error(err));
+        socket.on('error', (err) => {
+            if (argv.debug) logError(err);
+        });
     } else {
         socket.end();
     }
@@ -393,6 +348,3 @@ const cleanup = () => process.exit(1);
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
 process.on('exit', () => server.close());
-
-// Log server information
-console.log('🌐', chalk.dim('Ready >'), chalk.white(`http://${host}:${port}/`));

@@ -2,8 +2,11 @@ import Registry from 'winreg';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { error } from './log';
+import { logError } from './clientUtils';
 
+/**
+ * Get the path to the Screeps game files.
+ */
 export async function getScreepsPath() {
     const { env, platform } = process;
 
@@ -11,7 +14,7 @@ export async function getScreepsPath() {
         case 'darwin': {
             // MacOS, checks for screeps in the default Steam location
             const steamPath = path.join(os.homedir(), 'Library', 'Application Support', 'Steam');
-            return findScreepsPath(steamPath);
+            return getScreepsPackagePath(steamPath);
         }
 
         case 'linux': {
@@ -21,7 +24,7 @@ export async function getScreepsPath() {
                 const mountDrives = fs.readdirSync(mountPath).filter((name) => name.length === 1);
                 for (const drive of mountDrives) {
                     const steamPath = path.join(mountPath, drive, 'Program Files (x86)', 'Steam');
-                    const screepsPath = findScreepsPath(steamPath);
+                    const screepsPath = getScreepsPackagePath(steamPath);
                     if (screepsPath) {
                         return screepsPath;
                     }
@@ -38,7 +41,7 @@ export async function getScreepsPath() {
                 ['snap', 'steam'], // snapcraft
             ]) {
                 const steamPath = path.join(os.homedir(), ...dir);
-                const screepsPath = findScreepsPath(steamPath);
+                const screepsPath = getScreepsPackagePath(steamPath);
                 if (screepsPath) {
                     return screepsPath;
                 }
@@ -50,7 +53,7 @@ export async function getScreepsPath() {
             // Windows, checks for screeps in Steam location from the Windows registry
             let steamPath = await getSteamPathFromWinReg();
             if (steamPath) {
-                const screepsPath = findScreepsPath(steamPath);
+                const screepsPath = getScreepsPackagePath(steamPath);
                 if (screepsPath) {
                     return screepsPath;
                 }
@@ -60,15 +63,18 @@ export async function getScreepsPath() {
             const programFilesPath =
                 env['PROGRAMFILES(X86)'] || path.join(env.SystemDrive || 'C:', 'Program Files (x86)');
             steamPath = path.join(programFilesPath, 'Steam');
-            return findScreepsPath(steamPath);
+            return getScreepsPackagePath(steamPath);
         }
     }
 
-    error(`Unsupported operating system '${platform}'.`);
+    logError(`Unsupported operating system '${platform}'.`);
     return null;
 }
 
-export function findScreepsPath(steamPath: string) {
+/**
+ * Returns the path to the Screeps package.nw in the given Steam directory if it exists.
+ */
+function getScreepsPackagePath(steamPath: string) {
     const screepsPath = path.join(steamPath, 'steamapps', 'common', 'Screeps', 'package.nw');
     if (fs.existsSync(screepsPath)) {
         return screepsPath;
@@ -76,6 +82,9 @@ export function findScreepsPath(steamPath: string) {
     return null;
 }
 
+/**
+ * Get the Steam installation path from the Windows registry.
+ */
 async function getSteamPathFromWinReg(): Promise<string | null> {
     return new Promise((resolve) => {
         const regKey = new Registry({
