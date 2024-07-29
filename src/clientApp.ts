@@ -38,18 +38,55 @@ const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
 const version = packageJson.version || '1.0.0';
 const arrow = '\u2192';
 
+const DEFAULT_HOST = 'localhost';
+const DEFAULT_PORT = 8080;
+
 // Parse program arguments
 const argv = (() => {
-    const parser = new ArgumentParser();
+    const parser = new ArgumentParser({ description: 'Web proxy for the Screeps World game client.' });
     parser.add_argument('-v', '--version', { action: 'version', version: `v${version}` });
-    parser.add_argument('--package', { nargs: '?', type: 'str' });
-    parser.add_argument('--host', { nargs: '?', type: 'str' });
-    parser.add_argument('--port', { nargs: '?', type: 'int' });
-    parser.add_argument('--backend', { nargs: '?', type: 'str' });
-    parser.add_argument('--internal_backend', { nargs: '?', type: 'str' });
-    parser.add_argument('--server_list', { nargs: '?', type: 'str' });
-    parser.add_argument('--beautify', { action: 'store_true', default: false });
-    parser.add_argument('--debug', { action: 'store_true', default: false });
+    parser.add_argument('--package', {
+        nargs: '?',
+        type: 'str',
+        help: "Path to the Screeps package.nw file. Use this if the path isn't automatically detected.",
+    });
+    parser.add_argument('--host', {
+        nargs: '?',
+        type: 'str',
+        default: DEFAULT_HOST,
+        help: `Changes the host address. (default: ${DEFAULT_HOST})`,
+    });
+    parser.add_argument('--port', {
+        nargs: '?',
+        type: 'int',
+        default: DEFAULT_PORT,
+        help: `Changes the port. (default: ${DEFAULT_PORT})`,
+    });
+    parser.add_argument('--backend', {
+        nargs: '?',
+        type: 'str',
+        help: 'Set the backend url. When provided, the app will directly proxy this server and disable the server list page.',
+    });
+    parser.add_argument('--internal_backend', {
+        nargs: '?',
+        type: 'str',
+        help: "Set the backend's internal url. Requires --backend to be set. When provided, the app will use this url to connect to the server while still using its --backend name externally.",
+    });
+    parser.add_argument('--server_list', {
+        nargs: '?',
+        type: 'str',
+        help: 'Path to a custom server list json config file.',
+    });
+    parser.add_argument('--beautify', {
+        action: 'store_true',
+        default: false,
+        help: 'Formats .js files loaded in the client for debugging.',
+    });
+    parser.add_argument('--debug', {
+        action: 'store_true',
+        default: false,
+        help: 'Display verbose errors for development.',
+    });
     return parser.parse_args();
 })();
 
@@ -88,8 +125,7 @@ const lastModified = stat.mtime;
 
 // Set up web server
 const koa = new Koa();
-const port = argv.port ?? 8080;
-const host = argv.host ?? 'localhost';
+const { host, port } = argv;
 const server = koa.listen(port, host);
 server.on('error', (err) => handleServerError(err, argv.debug));
 server.on('listening', () => console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${host}:${port}/`)));

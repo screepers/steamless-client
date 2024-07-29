@@ -42,12 +42,12 @@ Steam OpenId support is required on your local server. Enable it with [screepsmo
 
 All of the command line arguments are optional.
 
-- `--package` &mdash; Used to set the path to the Screeps package.nw file. Use this if the path isn't automatically detected.
+- `--package` &mdash; Path to the Screeps package.nw file. Use this if the path isn't automatically detected.
 - `--host` &mdash; Changes the host address. (default: localhost)
 - `--port` &mdash; Changes the port. (default: 8080)
-- `--backend` &mdash; Used to configure a backend url. If provided, the client app proxies this endpoint and the server list page is disabled.
-- `--internal_backend` &mdash; Used to configure an internal backend url. If provided, the client app uses this address to reference the internal server endpoint.
-- `--server_list` &mdash; Used to set the path to a custom server list json config file.
+- `--backend` &mdash; Set the backend url. When provided, the app will directly proxy this server and disable the server list page.
+- `--internal_backend` &mdash; Set the backend's internal url. Requires --backend to be set. When provided, the app will use this url to connect to the server while still using its --backend name externally.
+- `--server_list` &mdash; Path to a custom server list json config file.
 - `--beautify` &mdash; Formats .js files loaded in the client for debugging.
 - `--debug` &mdash; Display verbose errors for development.
 - `-v` , `--version` &mdash; Display the version number.
