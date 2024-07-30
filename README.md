@@ -11,17 +11,52 @@ The Screepers Steamless Client is a web proxy for the [Screeps World](https://st
 
 ## Installation
 
-Option 1. Temporarily install and run the latest client app:
+### Run with NPX
+
+Install the latest version in a temporary location and run the client:
 
 ```sh
 npx screepers-steamless-client
 ```
 
-Option 2. Install globally and then run the client app:
+### Install Globally with NPM
+
+Install the latest version globally with npm and run the client:
 
 ```sh
 npm install -g screepers-steamless-client
 screepers-steamless-client
+```
+
+### Run with Docker Compose
+
+Use Docker Compose to run the client. Create a `compose.yaml` file in an empty folder or update an existing one by adding the `client` entry under `services`.
+
+```yaml
+services:
+  client:
+    image: node:20
+    command: >
+      npx screepers-steamless-client
+      --package /screeps.nw
+      --host 0.0.0.0
+    volumes:
+      - ${SCREEPS_NW_PATH:?"Missing screeps nw file"}:/screeps.nw
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+```
+
+Create a `.env` file with the following content. Replace the path with the actual path to your Screeps `package.nw` file.
+
+```bash
+SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/package.nw"
+```
+
+Run the Docker container:
+
+```bash
+docker compose up
 ```
 
 ## Usage
@@ -42,6 +77,8 @@ Steam OpenId support is required on your local server. Enable it with [screepsmo
 
 All of the command line arguments are optional.
 
+- `-h` , `--help` &mdash; Display the help message.
+- `-v` , `--version` &mdash; Display the version number.
 - `--package` &mdash; Path to the Screeps package.nw file. Use this if the path isn't automatically detected.
 - `--host` &mdash; Changes the host address. (default: localhost)
 - `--port` &mdash; Changes the port. (default: 8080)
@@ -50,80 +87,50 @@ All of the command line arguments are optional.
 - `--server_list` &mdash; Path to a custom server list json config file.
 - `--beautify` &mdash; Formats .js files loaded in the client for debugging.
 - `--debug` &mdash; Display verbose errors for development.
-- `-v` , `--version` &mdash; Display the version number.
-- `-h` , `--help` &mdash; Display the help message.
 
-## Argument Examples
+## Examples
 
-### Screeps package.nw
+### `--package`
 
-If the Screeps package.nw is not automatically detected, you will need to set the path like this:
+If the Screeps package.nw is not automatically detected, you can provide the path to the Screeps package.nw file.
 
 ```sh
-npx screepers-steamless-client --package ~/Screeps/package.nw
+npx screepers-steamless-client --package ~/screeps/package.nw
 ```
 
-### Backend proxy
+### `--backend`
 
-Proxy a server directly (disables the server list page).
+Proxy a specific server and disable the server list page.
 
 ```sh
 npx screepers-steamless-client --backend http://localhost:21025
 ```
 
-### Docker compose
+### `--internal_backend`
 
-Example usage with Jomik's [screeps-server](https://github.com/Jomik/screeps-server). You can add this `client` service into your existing docker-compose.yml:
+Specify the internal backend for container environments when using the `--backend` option.
 
-```yaml
-# docker-compose.yml
-version: '3'
-services:
-  # ... existing services ...
-
-  client:
-    image: node:20
-    command: >
-      sh -c 'npx screepers-steamless-client
-      --package /screeps.nw
-      --host 0.0.0.0
-      --internal_backend http://screeps:21025
-      --backend http://localhost:21025'
-    volumes:
-      - ${SCREEPS_NW_PATH:?"Missing screeps nw file"}:/screeps.nw
-    ports:
-      - 8080:8080
-    restart: unless-stopped
+```sh
+npx screepers-steamless-client --backend http://localhost:21025 --internal_backend http://screeps:21025
 ```
 
-Set up the env variable `SCREEPS_NW_PATH` with the correct path to your Screeps package.nw (for example on macOS):
+### `--server_list`
 
-```bash
-# .env
-SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/package.nw"
-```
+Customize your server list by copying the [server_list.json](settings/server_list.json) file and making your changes.
 
-### Custom server list
-
-Set the path to a custom server list json config file.
+Run the client with your custom server list:
 
 ```sh
 npx screepers-steamless-client --server_list ./custom_server_list.json
 ```
 
-The custom server list json file should follow the same format as [server_list.json](settings/server_list.json). Each object in the json file should include a type, name, and url:
-* `type` &mdash; This is used to organize servers into sections.
-* `name` &mdash; This is the name of the server.
-* `url` &mdash; This is used to create a link to the server.
-* `subdomain` &mdash; This prefixes localhost urls for multi server support.
-
 ## Development Scripts
 
-- `npm start` &mdash; Builds and starts the client app.
-- `npm run build` &mdash; Builds the client app to dist.
-- `npm run dev` &mdash; Builds and watches for changes (hot reloading).
-- `npm run format` &mdash; Formats the src using Prettier.
-- `npm run lint` &mdash; Lints the src using ESLint.
+- `npm start` &mdash; Build and start the client app.
+- `npm run build` &mdash; Build the client app to dist.
+- `npm run dev` &mdash; Build and watch for changes (hot reload).
+- `npm run format` &mdash; Format the src using Prettier.
+- `npm run lint` &mdash; Lint the src using ESLint.
 
 ## Tips
 
