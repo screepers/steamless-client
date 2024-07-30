@@ -90,6 +90,8 @@ const argv = (() => {
     return parser.parse_args();
 })();
 
+const hostAddress = argv.host === '0.0.0.0' ? DEFAULT_HOST : argv.host;
+
 // Log welcome message
 console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`));
 
@@ -128,7 +130,9 @@ const koa = new Koa();
 const { host, port } = argv;
 const server = koa.listen(port, host);
 server.on('error', (err) => handleServerError(err, argv.debug));
-server.on('listening', () => console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${host}:${port}/`)));
+server.on('listening', () =>
+    console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${hostAddress}:${port}/`)),
+);
 
 // Get system path for public files dir
 const indexFile = 'index.ejs';
@@ -144,7 +148,7 @@ koa.use(async (context, next) => {
     if (argv.backend) return next(); // Skip if backend is specified
 
     if (['/', 'index.html'].includes(context.path)) {
-        const serverList = await getServerListConfig(host, port, argv.server_list);
+        const serverList = await getServerListConfig(hostAddress, port, argv.server_list);
         if (serverList.length) {
             await context.render(indexFile, { serverList });
             return;
@@ -195,7 +199,7 @@ koa.use(async (context, next) => {
     context.lastModified = lastModified;
     if (context.fresh) return;
 
-    const clientHost = context.header.host || `${host}:${port}`;
+    const clientHost = context.header.host || `${hostAddress}:${port}`;
 
     const client = new Client({
         host: clientHost,
