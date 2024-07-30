@@ -130,7 +130,9 @@ const koa = new Koa();
 const { host, port } = argv;
 const server = koa.listen(port, host);
 server.on('error', (err) => handleServerError(err, argv.debug));
-server.on('listening', () => console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${host}:${port}/`)));
+server.on('listening', () =>
+    console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${hostAddress}:${port}/`)),
+);
 
 // Get system path for public files dir
 const indexFile = 'index.ejs';

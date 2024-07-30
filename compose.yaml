@@ -1,10 +1,11 @@
 services:
   client:
     image: node:20
-    command: >
-      npx screepers-steamless-client
-      --package /screeps.nw
-      --host 0.0.0.0
+    # command: >
+    #   npx screepers-steamless-client
+    #   --package /screeps.nw
+    #   --host 0.0.0.0
+    build: .
     volumes:
       - ${SCREEPS_NW_PATH:?"Missing screeps nw file"}:/screeps.nw
     ports:
