@@ -30,24 +30,9 @@ screepers-steamless-client
 
 ### Run with Docker Compose
 
-Use Docker Compose to run the client. Create a `compose.yaml` file in an empty folder or update an existing one by adding the `client` entry under `services`.
+Use Docker Compose to run the client. Download our [`compose.yaml`](compose.yaml) file and place it in an empty folder. Alternatively, you can incorporate the `client` service into an existing Docker Compose configuration.
 
-```yaml
-services:
-  client:
-    image: node:20
-    command: >
-      npx screepers-steamless-client
-      --package /screeps.nw
-      --host 0.0.0.0
-    volumes:
-      - ${SCREEPS_NW_PATH:?"Missing screeps nw file"}:/screeps.nw
-    ports:
-      - 8080:8080
-    restart: unless-stopped
-```
-
-Create a `.env` file with the following content. Replace the path with the actual path to your Screeps `package.nw` file.
+Create a `.env` file with the following content in the same folder as the compose.yaml. Replace the path with the actual path to your Screeps `package.nw` file:
 
 ```bash
 SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/package.nw"
