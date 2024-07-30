@@ -13,7 +13,7 @@ The Screepers Steamless Client is a web proxy for the [Screeps World](https://st
 
 ### Run with NPX
 
-Install the latest version in a temporary location and run the client:
+Run the latest version with npx without installing:
 
 ```sh
 npx screepers-steamless-client
@@ -30,9 +30,12 @@ screepers-steamless-client
 
 ### Run with Docker Compose
 
-Use Docker Compose to run the client. Download our [`compose.yaml`](compose.yaml) file and place it in an empty folder. Alternatively, you can incorporate the `client` service into an existing Docker Compose configuration.
+Use Docker Compose to run the client.
+- Download the [`compose.yaml`](compose.yaml) file and place it in an empty folder.
+- Alternatively, you can incorporate the `client` entry from [`compose.yaml`](compose.yaml) into an existing docker compose config (for example: combine with a screeps server launcher).
 
-Create a `.env` file with the following content in the same folder as the compose.yaml. Replace the path with the actual path to your Screeps `package.nw` file:
+Set up the `SCREEPS_NW_PATH` environment variable.
+- Create a `.env` file with the following content in the same folder as the compose.yaml. Replace the path with the actual path to your Screeps `package.nw` file:
 
 ```bash
 SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/package.nw"
