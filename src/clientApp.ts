@@ -372,9 +372,8 @@ server.on('upgrade', (req, socket, head) => {
     const info = extractBackend(req.url!, argv.backend);
     if (info && req.headers.upgrade?.toLowerCase() === 'websocket') {
         req.url = info.endpoint;
-        proxy.ws(req, socket, head, {
-            target: argv.internal_backend ?? info.backend,
-        });
+        const target = info.backend.includes(LOCALHOST) ? 'http://screeps:21025' : info.backend;
+        proxy.ws(req, socket, head, { target });
         socket.on('error', (err) => {
             if (argv.debug) logError(err);
         });
