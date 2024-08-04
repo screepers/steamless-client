@@ -38,7 +38,8 @@ const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
 const version = packageJson.version || '1.0.0';
 const arrow = '\u2192';
 
-const DEFAULT_HOST = 'localhost';
+const LOCALHOST = 'localhost';
+const DEFAULT_HOST = LOCALHOST;
 const DEFAULT_PORT = 8080;
 
 // Parse program arguments
@@ -90,7 +91,7 @@ const argv = (() => {
     return parser.parse_args();
 })();
 
-const hostAddress = argv.host === '0.0.0.0' ? DEFAULT_HOST : argv.host;
+const hostAddress = argv.host === '0.0.0.0' ? LOCALHOST : argv.host;
 
 // Log welcome message
 console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`));
@@ -359,9 +360,8 @@ koa.use((context, next) => {
             const separator = info.endpoint.endsWith('?') ? '' : info.endpoint.includes('?') ? '&' : '?';
             context.req.url = `${info.endpoint}${separator}returnUrl=${returnUrl}`;
         }
-        proxy.web(context.req, context.res, {
-            target: argv.internal_backend ?? info.backend,
-        });
+        const target = info.backend.includes(LOCALHOST) ? 'http://screeps:21025' : info.backend;
+        proxy.web(context.req, context.res, { target });
         return;
     }
     return next();
