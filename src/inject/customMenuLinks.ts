@@ -1,7 +1,7 @@
 /**
  * This function is injected into the client to customize the menu links.
  */
-export function customMenuLinks(backend: string, seasonLink: string, ptrLink?: string, serverListLink?: string) {
+export function customMenuLinks(backend: string, seasonLink: string, ptrLink?: string, changeServerLink?: string) {
     const appMenuSelector = 'app-menu.--ui';
 
     function updateAppMenu() {
@@ -40,8 +40,8 @@ export function customMenuLinks(backend: string, seasonLink: string, ptrLink?: s
             }
 
             if (href?.startsWith('mailto:')) {
-                if (serverListLink) {
-                    link.setAttribute('href', serverListLink);
+                if (changeServerLink) {
+                    link.setAttribute('href', changeServerLink);
                     link.setAttribute('target', '_self');
                     link.querySelector('svg use')?.setAttribute('xlink:href', '#symbol-menu-change-server');
                     const label = link.querySelector('div div');

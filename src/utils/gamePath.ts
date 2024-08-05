@@ -2,7 +2,7 @@ import Registry from 'winreg';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { logError } from './clientUtils';
+import { logError } from './errors';
 
 /**
  * Get the path to the Screeps game files.
