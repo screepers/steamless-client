@@ -15,16 +15,14 @@ import { Transform } from 'stream';
 import { Client, Route } from './utils/client';
 import { getScreepsPath } from './utils/gamePath';
 import {
-    logError,
     isOfficialLikeVersion,
     trimLocalSubdomain,
     generateScriptTag,
     getServerListConfig,
     extractBackend,
     mimeTypes,
-    handleProxyError,
-    handleServerError,
-} from './utils/clientUtils';
+} from './utils/utils';
+import { logError, handleProxyError, handleServerError } from './utils/errors';
 import { clientAuth } from './inject/clientAuth';
 import { removeDecorations } from './inject/removeDecorations';
 import { customMenuLinks } from './inject/customMenuLinks';
@@ -37,9 +35,8 @@ const packageJsonPath = path.resolve(rootDir, 'package.json');
 const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
 const version = packageJson.version || '1.0.0';
 const arrow = '\u2192';
-
-const DEFAULT_HOST = 'localhost';
-const DEFAULT_PORT = 8080;
+const localhost = 'localhost';
+const defaultPort = 8080;
 
 // Parse program arguments
 const argv = (() => {
@@ -53,24 +50,19 @@ const argv = (() => {
     parser.add_argument('--host', {
         nargs: '?',
         type: 'str',
-        default: DEFAULT_HOST,
-        help: `Changes the host address. (default: ${DEFAULT_HOST})`,
+        default: localhost,
+        help: `Changes the host address. (default: ${localhost})`,
     });
     parser.add_argument('--port', {
         nargs: '?',
         type: 'int',
-        default: DEFAULT_PORT,
-        help: `Changes the port. (default: ${DEFAULT_PORT})`,
-    });
-    parser.add_argument('--backend', {
-        nargs: '?',
-        type: 'str',
-        help: 'Set the backend url. When provided, the app will directly proxy this server and disable the server list page.',
+        default: defaultPort,
+        help: `Changes the port. (default: ${defaultPort})`,
     });
     parser.add_argument('--internal_backend', {
         nargs: '?',
         type: 'str',
-        help: "Set the backend's internal url. Requires --backend to be set. When provided, the app will use this url to connect to the server while still using its --backend name externally.",
+        help: 'Set the internal backend url when running the Screeps server in a local container.',
     });
     parser.add_argument('--server_list', {
         nargs: '?',
@@ -90,7 +82,10 @@ const argv = (() => {
     return parser.parse_args();
 })();
 
-const hostAddress = argv.host === '0.0.0.0' ? DEFAULT_HOST : argv.host;
+const hostAddress = argv.host === '0.0.0.0' ? localhost : argv.host;
+
+const getProxyTarget = (backend: string) =>
+    argv.internal_backend && backend.includes(localhost) ? argv.internal_backend : backend;
 
 // Log welcome message
 console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`));
@@ -145,10 +140,8 @@ koa.use(koaConditionalGet());
 
 // Render the index.ejs file and pass the serverList variable
 koa.use(async (context, next) => {
-    if (argv.backend) return next(); // Skip if backend is specified
-
     if (['/', 'index.html'].includes(context.path)) {
-        const serverList = await getServerListConfig(hostAddress, port, argv.server_list);
+        const serverList = await getServerListConfig(__dirname, hostAddress, port, argv.server_list);
         if (serverList.length) {
             await context.render(indexFile, { serverList });
             return;
@@ -167,8 +160,6 @@ const publicFiles = [
 
 // Serve public files
 koa.use((context, next) => {
-    if (argv.backend) return next(); // Skip if backend is specified
-
     const urlPath = context.path.substring(1);
     for (const { file, type } of publicFiles) {
         if (urlPath === file) {
@@ -183,7 +174,7 @@ koa.use((context, next) => {
 
 // Serve client assets
 koa.use(async (context, next) => {
-    const info = extractBackend(context.path, argv.backend);
+    const info = extractBackend(context.path);
     if (!info) return;
 
     const isOfficial = info.backend === 'https://screeps.com';
@@ -204,8 +195,7 @@ koa.use(async (context, next) => {
     const client = new Client({
         host: clientHost,
         prefix,
-        backend: argv.backend,
-        server: info.backend,
+        backend: info.backend,
     });
 
     // Rewrite various payloads
@@ -219,7 +209,7 @@ koa.use(async (context, next) => {
                     ? `${client.getURL(Route.ROOT)}season/`
                     : client.getURL(Route.ROOT, { prefix: false });
             const ptrLink = isOfficial && !prefix ? `${client.getURL(Route.ROOT)}ptr/` : undefined;
-            const serverListLink = argv.backend ? undefined : `http://${trimLocalSubdomain(clientHost)}/`;
+            const changeServerLink = `http://${trimLocalSubdomain(clientHost)}/`;
 
             // Inject startup script
             const header = '<title>Screeps</title>';
@@ -227,7 +217,7 @@ koa.use(async (context, next) => {
                 header,
                 generateScriptTag(clientAuth, { backend: info.backend }),
                 generateScriptTag(removeDecorations, { backend: info.backend }),
-                generateScriptTag(customMenuLinks, { backend: info.backend, seasonLink, ptrLink, serverListLink }),
+                generateScriptTag(customMenuLinks, { backend: info.backend, seasonLink, ptrLink, changeServerLink }),
             ].join('\n');
             src = src.replace(header, replaceHeader);
 
@@ -350,7 +340,7 @@ koa.use((context, next) => {
         return;
     }
 
-    const info = extractBackend(context.url, argv.backend);
+    const info = extractBackend(context.url);
     if (info) {
         context.respond = false;
         context.req.url = info.endpoint;
@@ -359,9 +349,8 @@ koa.use((context, next) => {
             const separator = info.endpoint.endsWith('?') ? '' : info.endpoint.includes('?') ? '&' : '?';
             context.req.url = `${info.endpoint}${separator}returnUrl=${returnUrl}`;
         }
-        proxy.web(context.req, context.res, {
-            target: argv.internal_backend ?? info.backend,
-        });
+        const target = getProxyTarget(info.backend);
+        proxy.web(context.req, context.res, { target });
         return;
     }
     return next();
@@ -369,12 +358,11 @@ koa.use((context, next) => {
 
 // Proxy WebSocket requests
 server.on('upgrade', (req, socket, head) => {
-    const info = extractBackend(req.url!, argv.backend);
+    const info = extractBackend(req.url!);
     if (info && req.headers.upgrade?.toLowerCase() === 'websocket') {
         req.url = info.endpoint;
-        proxy.ws(req, socket, head, {
-            target: argv.internal_backend ?? info.backend,
-        });
+        const target = getProxyTarget(info.backend);
+        proxy.ws(req, socket, head, { target });
         socket.on('error', (err) => {
             if (argv.debug) logError(err);
         });

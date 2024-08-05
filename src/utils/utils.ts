@@ -1,11 +1,9 @@
-import chalk from 'chalk';
 import path from 'path';
 import fetch from 'node-fetch';
 import { existsSync, promises as fs } from 'fs';
-import { fileURLToPath, URL } from 'url';
-import { ServerResponse } from 'http';
+import { URL } from 'url';
 import { type Client, Route } from './client';
-import { ServerError, Server } from './types';
+import { Server } from './types';
 
 export const mimeTypes = {
     '.css': 'text/css',
@@ -20,52 +18,11 @@ export const mimeTypes = {
 } as const;
 
 /**
- * Log a message to the console with error styling.
- */
-export function logError(...args: unknown[]) {
-    console.error('❌', chalk.bold.red('Error'), ...args);
-}
-
-const serverErrors: Record<PropertyKey, string> = {
-    EADDRINUSE: 'The port is already in use by another application.',
-    ECONNREFUSED: 'Connection refused by the target server.',
-    ETIMEDOUT: 'The request to the target server timed out.',
-    EHOSTUNREACH: 'The target server is unreachable.',
-    ENOTFOUND: 'DNS lookup failed. The target server could not be found.',
-    EACCES: 'Permission denied. Please check your privileges.',
-    EADDRNOTAVAIL: 'The specified address is not available.',
-    ECONNRESET: 'Connection reset by peer.',
-    ENETUNREACH: 'Network is unreachable.',
-};
-
-/**
- * Log proxy errors to the console with error styling.
- */
-export function handleProxyError(err: ServerError, res: ServerResponse, debug?: boolean) {
-    const message = serverErrors[err.code!] ?? 'An unknown error occurred.';
-    const target = `${err.address ?? ''}${err.port ? `:${err.port}` : ''}`;
-    logError(message, chalk.dim(target), ...(debug ? ['\n', err] : []));
-
-    // Return a plain text response instead of json so the client will stop loading.
-    res.writeHead(500, { 'Content-Type': 'plain/text' });
-    res.end(['Error:', message, target].join(' '));
-}
-
-/**
- * Log server errors to the console with error styling.
- */
-export function handleServerError(err: ServerError, debug?: boolean) {
-    const message = serverErrors[err.code!] ?? err.code ?? 'An unknown error occurred.';
-    const target = `${err.address ?? ''}${err.port ? `:${err.port}` : ''}`;
-    logError(message, chalk.dim(target), ...(debug ? ['\n', err] : []));
-}
-
-/**
  * Check if the server is running an official-like version of the Screeps server (xxscreeps).
  */
 export async function isOfficialLikeVersion(client: Client) {
     try {
-        const versionUrl = `${client.getURL(Route.API, { backend: true })}/version`;
+        const versionUrl = `${client.getURL(Route.API)}/version`;
         const response = await fetch(versionUrl);
         const version = (await response.json()) as { serverData?: { features?: { name: string }[] } } | undefined;
         return version?.serverData?.features?.some(({ name }) => name.toLowerCase() === 'official-like') ?? false;
@@ -77,13 +34,7 @@ export async function isOfficialLikeVersion(client: Client) {
 /**
  * Extract the backend and endpoint from a URL.
  */
-export function extractBackend(url: string, backend?: string) {
-    if (backend) {
-        return {
-            backend: backend.replace(/\/+$/, ''),
-            endpoint: url,
-        };
-    }
+export function extractBackend(url: string) {
     const groups = /^\/\((?<backend>[^)]+)\)(?<endpoint>\/.*)$/.exec(url)?.groups;
     if (groups) {
         return {
@@ -124,15 +75,12 @@ export function generateScriptTag(func: Function, args: { [key: string]: unknown
 /**
  * Utility to get the server list configuration.
  */
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export async function getServerListConfig(host: string, port: number, serverListPath?: string) {
+export async function getServerListConfig(dirname: string, host: string, port: number, serverListPath?: string) {
     if (!serverListPath) {
         const serverListFile = 'server_list.json';
-        serverListPath = path.join(__dirname, `../settings/${serverListFile}`);
+        serverListPath = path.join(dirname, `../settings/${serverListFile}`);
         if (!existsSync(serverListPath)) {
-            serverListPath = path.join(__dirname, serverListFile);
+            serverListPath = path.join(dirname, serverListFile);
         }
     }
 

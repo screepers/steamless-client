@@ -32,7 +32,15 @@ screepers-steamless-client
 
 Use Docker Compose to run the client.
 - Download the [`compose.yaml`](compose.yaml) file and place it in an empty folder.
-- Alternatively, you can incorporate the `client` entry from [`compose.yaml`](compose.yaml) into an existing docker compose config (for example: combine with a screeps server launcher).
+- Alternatively, you can add the `client` entry from [`compose.yaml`](compose.yaml) to an existing Docker Compose configuration (e.g., combine it with a Screeps server launcher). If you do this, make sure to use the `--internal_backend` argument in the command to reference the Screeps server container address, like this:
+
+```yaml
+    command: >
+      npx screepers-steamless-client
+      --package /screeps.nw
+      --host 0.0.0.0
+      --internal_backend http://screeps:21025
+```
 
 Set up the `SCREEPS_NW_PATH` environment variable.
 - Create a `.env` file with the following content in the same folder as the compose.yaml. Replace the path with the actual path to your Screeps `package.nw` file:
@@ -70,8 +78,7 @@ All of the command line arguments are optional.
 - `--package` &mdash; Path to the Screeps package.nw file. Use this if the path isn't automatically detected.
 - `--host` &mdash; Changes the host address. (default: localhost)
 - `--port` &mdash; Changes the port. (default: 8080)
-- `--backend` &mdash; Set the backend url. When provided, the app will directly proxy this server and disable the server list page.
-- `--internal_backend` &mdash; Set the backend's internal url. Requires --backend to be set. When provided, the app will use this url to connect to the server while still using its --backend name externally.
+- `--internal_backend` &mdash; Set the internal backend url when running the Screeps server in a local container. This will convert requests to a localhost backend to use the container name where the Screeps server is running.
 - `--server_list` &mdash; Path to a custom server list json config file.
 - `--beautify` &mdash; Formats .js files loaded in the client for debugging.
 - `--debug` &mdash; Display verbose errors for development.
@@ -86,20 +93,12 @@ If the Screeps package.nw is not automatically detected, you can provide the pat
 npx screepers-steamless-client --package ~/screeps/package.nw
 ```
 
-### `--backend`
-
-Proxy a specific server and disable the server list page.
-
-```sh
-npx screepers-steamless-client --backend http://localhost:21025
-```
-
 ### `--internal_backend`
 
-Specify the internal backend for container environments when using the `--backend` option.
+When running a Screeps server in a Docker container, you can configure the server to redirect requests made to localhost to an internal backend url.
 
 ```sh
-npx screepers-steamless-client --backend http://localhost:21025 --internal_backend http://screeps:21025
+npx screepers-steamless-client --internal_backend http://screeps:21025
 ```
 
 ### `--server_list`
