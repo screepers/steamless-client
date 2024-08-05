@@ -17,7 +17,7 @@ if [[ "$currentVersion" != "$newVersion" ]]; then
     git config --local user.email "action@github.com"
     git config --local user.name "GitHub Action"
     npm version --no-git-tag-version $newVersion
-    git add package.json package-lock.json
+    git add package.json
     git commit -m "chore: release $newVersion [skip ci]"
     git push
 fi
