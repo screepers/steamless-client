@@ -10,7 +10,6 @@ import path from 'path';
 import { ArgumentParser } from 'argparse';
 import { createReadStream, existsSync, promises as fs } from 'fs';
 import { fileURLToPath, URL } from 'url';
-import { ServerResponse } from 'http';
 import { Transform } from 'stream';
 import { Client, Route } from './utils/client';
 import { getScreepsPath } from './utils/gamePath';
@@ -92,7 +91,7 @@ console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`)
 
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
-proxy.on('error', (err, _req, res) => handleProxyError(err, res as ServerResponse, argv.debug));
+proxy.on('error', (err, req, res) => handleProxyError(err, res, argv.debug));
 
 const exitOnPackageError = () => {
     if (argv.package) {
