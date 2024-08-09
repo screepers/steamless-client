@@ -36,11 +36,11 @@ export function logError(...args: unknown[]) {
 export function handleProxyError(err: ServerError, res: ServerResponse | Socket, debug?: boolean) {
     handleServerError(err, debug);
 
-    if (res instanceof ServerResponse) {
+    if (res instanceof ServerResponse && err.code === 'ECONNREFUSED') {
         // Return a plain/text response so the client will stop loading.
         res.writeHead(500, { 'Content-Type': 'plain/text' });
+        res.end(String(err));
     }
-    res.end(String(err));
 }
 
 /**
