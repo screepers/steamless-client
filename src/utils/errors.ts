@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { ServerResponse } from 'http';
+import { Socket } from 'net';
 import { ServerError } from './types';
 
 const errorCodes: Record<PropertyKey, string> = {
@@ -32,14 +33,14 @@ export function logError(...args: unknown[]) {
 /**
  * Log proxy errors to the console with error styling.
  */
-export function handleProxyError(err: ServerError, res: ServerResponse, debug?: boolean) {
-    const message = getErrorDescription(err);
-    const target = `${err.address ?? ''}${err.port ? `:${err.port}` : ''}`;
-    logError(message, chalk.dim(target), ...(debug ? ['\n', err] : []));
+export function handleProxyError(err: ServerError, res: ServerResponse | Socket, debug?: boolean) {
+    handleServerError(err, debug);
 
-    // Return a plain text response instead of json so the client will stop loading.
-    res.writeHead(500, { 'Content-Type': 'plain/text' });
-    res.end(['Error:', message, target].join(' '));
+    if (res instanceof ServerResponse) {
+        // Return a plain/text response so the client will stop loading.
+        res.writeHead(500, { 'Content-Type': 'plain/text' });
+    }
+    res.end(String(err));
 }
 
 /**
