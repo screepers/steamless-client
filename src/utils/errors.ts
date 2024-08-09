@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { ServerResponse } from 'http';
-import { Socket } from 'net';
+import type { Socket } from 'net';
 import { ServerError } from './types';
 
 const errorCodes: Record<PropertyKey, string> = {
