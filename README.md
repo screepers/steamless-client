@@ -81,6 +81,7 @@ All of the command line arguments are optional.
 - `--internal_backend` &mdash; Set the internal backend url when running the Screeps server in a local container. This will convert requests to a localhost backend to use the container name where the Screeps server is running.
 - `--server_list` &mdash; Path to a custom server list json config file.
 - `--beautify` &mdash; Formats .js files loaded in the client for debugging.
+- `--guest` &mdash; Enable guest mode for xxscreeps.
 - `--debug` &mdash; Display verbose errors for development.
 
 ## Examples
@@ -121,6 +122,6 @@ npx screepers-steamless-client --server_list ./custom_server_list.json
 
 ## Tips
 
-This client uses "guest mode" by default in [xxscreeps](https://github.com/laverdet/xxscreeps/), providing a read-only view of the server when not signed in. To sign in with your Steam account, select "Sign Out" first, then click the Steam icon to sign in and play as normal.
+This client has an optional "guest mode" for [xxscreeps](https://github.com/laverdet/xxscreeps/) that can be enabled with `--guest` and provides a read-only view of the server when not signed in. To sign in with your Steam account, select "Sign Out" first, then click the Steam icon to sign in and play as normal.
 
 ![Safari Example](./docs/safari.png)
