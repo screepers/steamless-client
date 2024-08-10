@@ -68,6 +68,11 @@ const argv = (() => {
         type: 'str',
         help: 'Path to a custom server list json config file.',
     });
+    parser.add_argument('--guest', {
+        action: 'store_true',
+        default: false,
+        help: 'Enable guest mode for xxscreeps.',
+    });
     parser.add_argument('--beautify', {
         action: 'store_true',
         default: false,
@@ -214,7 +219,7 @@ koa.use(async (context, next) => {
             const header = '<title>Screeps</title>';
             const replaceHeader = [
                 header,
-                generateScriptTag(clientAuth, { backend: info.backend }),
+                generateScriptTag(clientAuth, { backend: info.backend, guest: argv.guest }),
                 generateScriptTag(removeDecorations, { backend: info.backend }),
                 generateScriptTag(customMenuLinks, { backend: info.backend, seasonLink, ptrLink, changeServerLink }),
             ].join('\n');
@@ -265,6 +270,9 @@ koa.use(async (context, next) => {
 
             const ptrValue = prefix === '/ptr' ? 'true' : 'false';
             src = src.replace(/(PTR: )[^,]*/, `$1${ptrValue}`);
+
+            const debugValue = argv.debug ? 'true' : 'false';
+            src = src.replace(/(DEBUG: )[^,]*/, `$1${debugValue}`);
 
             return src;
         } else if (context.path.endsWith('.js')) {
