@@ -292,7 +292,7 @@ koa.use(async (context, next) => {
 
             if (urlPath.startsWith('app2/main.')) {
                 // Modify getData() to fetch from the correct API path
-                src = src.replace(/fetch\(t\+"version"\)/g, `fetch(window.CONFIG.API_URL+"version")`);
+                src = src.replace(/fetch\(t\+"version"\)/g, 'fetch(window.CONFIG.API_URL+"version")');
                 // Remove fetch to forum RSS feed
                 src = src.replace(/fetch\("https:\/\/screeps\.com\/forum\/.+\.rss"\)/g, 'Promise.resolve()');
                 // Remove AWS host from rewards URL
