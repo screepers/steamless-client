@@ -1,10 +1,29 @@
+type AnyObject = Record<PropertyKey, unknown>;
+type AnyProps = string | AnyObject | AnyProps[];
+
 /**
- * This function is injected into the client to remove room decorations (and avoid CORS errors).
+ * This function is injected into the client to modify room decorations.
  */
-export function removeDecorations(backend: string) {
+export function roomDecorations(backend: string, awsHost: string) {
     if (!backend.includes('screeps.com')) {
         return;
     }
+
+    // Recursive function to remove AWS host from room decoration URLs
+    const removeAWSHost = (obj: AnyProps): AnyProps => {
+        if (typeof obj === 'string') {
+            return obj.replace(awsHost, '');
+        } else if (Array.isArray(obj)) {
+            return obj.map(removeAWSHost) as AnyProps;
+        } else if (obj && typeof obj === 'object') {
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    obj[key] = removeAWSHost(obj[key] as AnyProps);
+                }
+            }
+        }
+        return obj;
+    };
 
     const onRoomUpdate = () => {
         const roomInterval = setInterval(() => {
@@ -14,8 +33,8 @@ export function removeDecorations(backend: string) {
                 const connection = window.angular.element(document.body).injector().get('Connection');
                 const roomScope = window.angular.element(roomElement).scope();
                 connection.onRoomUpdate(roomScope, () => {
-                    // Remove room decorations
-                    roomScope.Room.decorations = [];
+                    // Modify room decorations to avoid CORS errors
+                    roomScope.Room.decorations = removeAWSHost(roomScope.Room.decorations);
                 });
             }
         }, 100);
