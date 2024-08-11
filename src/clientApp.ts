@@ -363,7 +363,9 @@ koa.use(async (context, next) => {
     context.set('Content-Type', mimeTypes[extension] ?? 'text/html');
 
     // Set cache for resources that change occasionally
-    context.set('Cache-Control', 'public, max-age=604800, immutable'); // Cache for 1 week
+    if (context.request.query.bust) {
+        context.set('Cache-Control', 'public, max-age=604800, immutable'); // Cache for 1 week
+    }
 });
 
 // Proxy API requests to Screeps server
