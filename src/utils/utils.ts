@@ -1,8 +1,8 @@
-import path from 'path';
-import fetch from 'node-fetch';
 import { existsSync, promises as fs } from 'fs';
+import fetch from 'node-fetch';
+import path from 'path';
 import { URL } from 'url';
-import { type Client, Route } from './client';
+import { Route, type Client } from './client';
 import { Server } from './types';
 
 export const mimeTypes = {
@@ -107,4 +107,18 @@ export async function getServerListConfig(dirname: string, host: string, port: n
     });
 
     return serverList;
+}
+
+export function getCommunityPages(): { title: string; url: string }[] {
+    return [
+        { title: 'Screeps Wiki', url: 'https://wiki.screepspl.us/index.php/Screeps_Wiki' },
+        { title: 'Community Grafana', url: 'https://pandascreeps.com/' },
+        { title: 'MarvinMTB vlog', url: 'https://www.youtube.com/playlist?list=PLGlzrjCmziEj7hQZSwcmkXkMXgkQXUQ6C' },
+        {
+            title: 'Attaner vlog',
+            url: 'https://www.youtube.com/watch?v=N7KMOG8C5vA&list=PLw9di5JwI6p-HUP0yPUxciaEjrsFb2kR2',
+        },
+        { title: 'Muons blog', url: 'https://bencbartlett.com/blog/tag/screeps/' },
+        { title: 'Harabis blog', url: 'https://sy-harabi.github.io/' },
+    ];
 }
