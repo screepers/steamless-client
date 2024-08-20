@@ -13,44 +13,51 @@
     <main>
         <div class="card">
             <% // The serverList is passed in from the clientApp %>
-                <% serverList.forEach(section=> { %>
-                    <div class="card-section" data-section="<%= section.name %>">
-                        <% if (section.name.toLowerCase()==='official' ) { %>
-                            <div class="screeps-logo">
-                                <img src="<%= section.logo %>" alt="Screeps Logo" />
+                <% if(serverList.length===0){ %>
+                    <h1> Could not load Server List</h1>
+                    <% } %>
+                        <% serverList.forEach(section=> { %>
+                            <div class="card-section" data-section="<%= section.name %>">
+                                <% if (section.name.toLowerCase()==='official' ) { %>
+                                    <div class="screeps-logo">
+                                        <img src="<%= section.logo %>" alt="Screeps Logo" />
+                                    </div>
+                                    <% } else { %>
+                                        <h2>
+                                            <%= section.name %>
+                                        </h2>
+                                        <% } %>
+                                            <% section.servers.forEach(server=> { %>
+                                                <div class="server">
+                                                    <a href="<%= server.url %>">
+                                                        <button>
+                                                            <%= server.name %>
+                                                        </button>
+                                                    </a>
+                                                    <span class="status-circle" data-api="<%= server.api %>"></span>
+                                                </div>
+                                                <% }) %>
                             </div>
-                            <% } else { %>
-                                <h2>
-                                    <%= section.name %>
-                                </h2>
-                                <% } %>
-                                    <% section.servers.forEach(server=> { %>
-                                        <div class="server">
-                                            <a href="<%= server.url %>">
-                                                <button>
-                                                    <%= server.name %>
-                                                </button>
-                                            </a>
-                                            <span class="status-circle" data-api="<%= server.api %>"></span>
-                                        </div>
-                                        <% }) %>
-                    </div>
-                    <% }) %>
+                            <% }) %>
         </div>
         <div class="card community-card">
-            <h2>Community Content</h2>
-            <div class="comm-container">
-                <% communityPages.forEach(page=> { %>
-                    <div class="comm-page">
-                        <a href="<%= page.url %> " target="_blank" rel="noopener noreferrer">
-                            <button class="comm-page-buttom">
-                                <%= page.title %>
-                            </button>
-                        </a>
-                    </div>
-                    <% }) %>
+            <% if(communityPages.length===0){ %>
+                <h1> Could not load Community Content</h1>
+                <% } else{ %>
+                    <h2>Community Content</h2>
+                    <% } %>
+                        <div class="comm-container">
+                            <% communityPages.forEach(page=> { %>
+                                <div class="comm-page">
+                                    <a href="<%= page.url %> " target="_blank" rel="noopener noreferrer">
+                                        <button class="comm-page-buttom">
+                                            <%= page.title %>
+                                        </button>
+                                    </a>
+                                </div>
+                                <% }) %>
 
-            </div>
+                        </div>
         </div>
     </main>
     <script src="/dist/serverStatus.js"></script>

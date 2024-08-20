@@ -159,12 +159,8 @@ koa.use(async (ctx, next) => {
 koa.use(async (context, next) => {
     if (['/', 'index.html'].includes(context.path)) {
         const communityPages = getCommunityPages();
-        const serverList = await getServerListConfig(__dirname, hostAddress, port, argv.server_list);
-        if (serverList.length) {
-            await context.render(indexFile, { serverList, communityPages });
-            return;
-        }
-        await context.render(indexFile, { communityPages });
+        let serverList = await getServerListConfig(__dirname, hostAddress, port, argv.server_list);
+        await context.render(indexFile, { serverList, communityPages });
     }
 
     return next();
