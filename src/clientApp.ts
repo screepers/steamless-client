@@ -4,6 +4,7 @@ import { ArgumentParser } from 'argparse';
 import chalk from 'chalk';
 import { createReadStream, existsSync, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
 import Koa from 'koa';
@@ -13,7 +14,7 @@ import { Transform } from 'stream';
 import { URL, fileURLToPath } from 'url';
 import { clientAuth } from './inject/clientAuth';
 import { customMenuLinks } from './inject/customMenuLinks';
-import { removeDecorations } from './inject/removeDecorations';
+import { roomDecorations } from './inject/roomDecorations';
 import { Client, Route } from './utils/client';
 import { handleProxyError, handleServerError, logError } from './utils/errors';
 import { getScreepsPath } from './utils/gamePath';
@@ -37,6 +38,7 @@ const version = packageJson.version || '1.0.0';
 const arrow = '\u2192';
 const localhost = 'localhost';
 const defaultPort = 8080;
+const awsHost = 'https://s3.amazonaws.com';
 
 // Parse program arguments
 const argv = (() => {
@@ -98,6 +100,7 @@ console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`)
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
 proxy.on('error', (err, req, res) => handleProxyError(err, res, argv.debug));
+const awsProxy = createProxyMiddleware({ target: awsHost, changeOrigin: true });
 
 const exitOnPackageError = () => {
     if (argv.package) {
@@ -142,6 +145,15 @@ koa.use(views(path.join(__dirname, '../views'), { extension: 'ejs' }));
 
 // Serve client assets directly from steam package
 koa.use(koaConditionalGet());
+
+// Proxy requests to AWS host to avoid CORS issues
+koa.use(async (ctx, next) => {
+    if (ctx.url.startsWith('/static.screeps.com')) {
+        await awsProxy(ctx.req, ctx.res, next);
+        ctx.respond = false;
+    }
+    return next();
+});
 
 // Render the index.ejs file and pass the serverList variable
 koa.use(async (context, next) => {
@@ -223,7 +235,7 @@ koa.use(async (context, next) => {
             const replaceHeader = [
                 header,
                 generateScriptTag(clientAuth, { backend: info.backend, guest: argv.guest }),
-                generateScriptTag(removeDecorations, { backend: info.backend }),
+                generateScriptTag(roomDecorations, { backend: info.backend, awsHost }),
                 generateScriptTag(customMenuLinks, { backend: info.backend, seasonLink, ptrLink, changeServerLink }),
             ].join('\n');
             src = src.replace(header, replaceHeader);
@@ -280,7 +292,23 @@ koa.use(async (context, next) => {
             return src;
         } else if (context.path.endsWith('.js')) {
             let src = await file.async('text');
-            if (urlPath === 'build.min.js') {
+
+            if (urlPath.startsWith('app2/main.')) {
+                // Modify getData() to fetch from the correct API path
+                src = src.replace(/fetch\(t\+"version"\)/g, 'fetch(window.CONFIG.API_URL+"version")');
+                // Remove fetch to forum RSS feed
+                src = src.replace(/fetch\("https:\/\/screeps\.com\/forum\/.+\.rss"\)/g, 'Promise.resolve()');
+                // Remove AWS host from rewards URL
+                src = src.replace(/https:\/\/s3\.amazonaws\.com/g, '');
+            } else if (urlPath.startsWith('vendor/renderer/renderer.js')) {
+                // Modify renderer to remove AWS host from loadElement()
+                src = src.replace(
+                    /\(this\.data\.src=this\.url\)/g,
+                    `(this.data.src=this.url.replace("${awsHost}",""))`,
+                );
+                // Remove AWS host from image URLs
+                src = src.replace(/src=t,/g, `src=t.replace("${awsHost}",""),`);
+            } else if (urlPath === 'build.min.js') {
                 // Load backend info from underlying server
                 const backend = new URL(info.backend);
                 const isOfficialLike = isOfficial || (await isOfficialLikeVersion(client));
@@ -337,9 +365,9 @@ koa.use(async (context, next) => {
     const extension = (/\.[^.]+$/.exec(urlPath.toLowerCase())?.[0] ?? '.html') as keyof typeof mimeTypes;
     context.set('Content-Type', mimeTypes[extension] ?? 'text/html');
 
-    // We can safely cache explicitly-versioned resources forever
+    // Set cache for resources that change occasionally
     if (context.request.query.bust) {
-        context.set('Cache-Control', 'public,max-age=31536000,immutable');
+        context.set('Cache-Control', 'public, max-age=604800, immutable'); // Cache for 1 week
     }
 });
 

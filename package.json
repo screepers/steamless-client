@@ -2,7 +2,7 @@
     "name": "screepers-steamless-client",
     "description": "A browser client for Screeps",
     "type": "module",
-    "version": "1.12.0",
+    "version": "1.13.0",
     "bin": {
         "screepers-steamless-client": "dist/clientApp.js"
     },
@@ -52,6 +52,7 @@
         "chalk": "^5.3.0",
         "ejs": "^3.1.10",
         "http-proxy": "1.18.1",
+        "http-proxy-middleware": "^3.0.0",
         "js-beautify": "1.15.1",
         "jszip": "^3.10.1",
         "koa": "2.15.3",
