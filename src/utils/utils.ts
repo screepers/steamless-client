@@ -113,12 +113,12 @@ export function getCommunityPages(): { title: string; url: string }[] {
     return [
         { title: 'Screeps Wiki', url: 'https://wiki.screepspl.us/index.php/Screeps_Wiki' },
         { title: 'Community Grafana', url: 'https://pandascreeps.com/' },
-        { title: 'MarvinMTB vlog', url: 'https://www.youtube.com/playlist?list=PLGlzrjCmziEj7hQZSwcmkXkMXgkQXUQ6C' },
+        { title: "MarvinTMB's videos", url: 'https://www.youtube.com/playlist?list=PLGlzrjCmziEj7hQZSwcmkXkMXgkQXUQ6C' },
         {
-            title: 'Attaner vlog',
+            title: "Atanner's videos",
             url: 'https://www.youtube.com/watch?v=N7KMOG8C5vA&list=PLw9di5JwI6p-HUP0yPUxciaEjrsFb2kR2',
         },
-        { title: 'Muons blog', url: 'https://bencbartlett.com/blog/tag/screeps/' },
-        { title: 'Harabis blog', url: 'https://sy-harabi.github.io/' },
+        { title: "Muon's blog", url: 'https://bencbartlett.com/blog/tag/screeps/' },
+        { title: "Harabi's blog", url: 'https://sy-harabi.github.io/' },
     ];
 }
