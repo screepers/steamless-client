@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         setStatus(elem, 'silver', 'Click to get server status');
 
         handleClick(elem);
-        sleep(3000);
 
         elem.addEventListener('click', () => handleClick(elem));
     });
@@ -57,8 +56,3 @@ async function handleClick(elem: HTMLElement) {
         setStatus(elem, 'red', 'Offline');
     }
 }
-
-function sleep(ms: number) {
-    return new Promise<void>(resolve => setTimeout(() => resolve(), ms));
-  }
-  
