@@ -1,31 +1,32 @@
 #!/usr/bin/env node
+import views from '@ladjs/koa-views';
+import { ArgumentParser } from 'argparse';
+import chalk from 'chalk';
+import { createReadStream, existsSync, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import Koa from 'koa';
-import koaConditionalGet from 'koa-conditional-get';
-import views from '@ladjs/koa-views';
 import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
-import chalk from 'chalk';
+import Koa from 'koa';
+import koaConditionalGet from 'koa-conditional-get';
 import path from 'path';
-import { ArgumentParser } from 'argparse';
-import { createReadStream, existsSync, promises as fs } from 'fs';
-import { fileURLToPath, URL } from 'url';
 import { Transform } from 'stream';
+import { URL, fileURLToPath } from 'url';
+import { clientAuth } from './inject/clientAuth';
+import { customMenuLinks } from './inject/customMenuLinks';
+import { roomDecorations } from './inject/roomDecorations';
 import { Client, Route } from './utils/client';
+import { handleProxyError, handleServerError, logError } from './utils/errors';
 import { getScreepsPath } from './utils/gamePath';
 import {
-    isOfficialLikeVersion,
-    trimLocalSubdomain,
-    generateScriptTag,
-    getServerListConfig,
     extractBackend,
+    generateScriptTag,
+    getCommunityPages,
+    getServerListConfig,
+    isOfficialLikeVersion,
     mimeTypes,
+    trimLocalSubdomain,
 } from './utils/utils';
-import { logError, handleProxyError, handleServerError } from './utils/errors';
-import { clientAuth } from './inject/clientAuth';
-import { roomDecorations } from './inject/roomDecorations';
-import { customMenuLinks } from './inject/customMenuLinks';
 
 // Get the app directory and version
 const __filename = fileURLToPath(import.meta.url);
@@ -157,11 +158,9 @@ koa.use(async (ctx, next) => {
 // Render the index.ejs file and pass the serverList variable
 koa.use(async (context, next) => {
     if (['/', 'index.html'].includes(context.path)) {
-        const serverList = await getServerListConfig(__dirname, hostAddress, port, argv.server_list);
-        if (serverList.length) {
-            await context.render(indexFile, { serverList });
-            return;
-        }
+        const communityPages = getCommunityPages();
+        let serverList = await getServerListConfig(__dirname, hostAddress, port, argv.server_list);
+        await context.render(indexFile, { serverList, communityPages });
     }
 
     return next();

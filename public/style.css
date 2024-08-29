@@ -102,6 +102,28 @@ main {
     flex-grow: 1;
 }
 
+.community-card {
+    height: 320px;
+    right: 0;
+    bottom: 0;
+    position: fixed;
+}
+
+.comm-container {
+    overflow: hidden;
+    overflow-y: scroll;
+}
+
+.comm-page {
+    display: block;
+    align-items: center;
+    margin: 10px;
+}
+
+.comm-page-buttom {
+    width: 100%;
+}
+
 .status-circle {
     cursor: pointer;
     width: 10px;
@@ -111,3 +133,4 @@ main {
     display: inline-block;
     box-sizing: border-box;
 }
+
