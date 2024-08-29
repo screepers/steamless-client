@@ -14,41 +14,41 @@
         <div class="card">
             <% // The serverList is passed in from the clientApp %>
                 <% if(serverList.length===0){ %>
-                <h1> Could not load Server List</h1>
-                <% } %>
-                <% serverList.forEach(section=> { %>
-                    <div class="card-section" data-section="<%= section.name %>">
-                        <% if (section.name.toLowerCase()==='official' ) { %>
-                            <div class="screeps-logo">
-                                <img src="<%= section.logo %>" alt="Screeps Logo" />
-                            </div>
-                        <% } else { %>
-                        <h2>
-                            <%= section.name %>
-                        </h2>
-                        <% } %>
-                        <% section.servers.forEach(server=> { %>
-                            <div class="server">
-                                <a href="<%= server.url %>">
-                                    <button>
-                                        <%= server.name %>
-                                    </button>
-                                </a>
-                                <span class="status-circle" data-api="<%= server.api %>"></span>
-                            </div>
-                        <% }) %>
-                    </div>
-                <% }) %>
-        </div>
-        <div class="card community-card">
-            <% if(communityPages.length===0){ %>
-                <h1> Could not load Community Content</h1>
-                <% } else{ %>
-                    <h2>Community Content</h2>
+                    <h1> Could not load Server List</h1>
                     <% } %>
-                        <div class="comm-container">
+                        <% serverList.forEach(section=> { %>
+                            <div class="card-section" data-section="<%= section.name %>">
+                                <% if (section.name.toLowerCase()==='official' ) { %>
+                                    <div class="screeps-logo">
+                                        <img src="<%= section.logo %>" alt="Screeps Logo" />
+                                    </div>
+                                    <% } else { %>
+                                        <h2>
+                                            <%= section.name %>
+                                        </h2>
+                                        <% } %>
+                                            <% section.servers.forEach(server=> { %>
+                                                <div class="server">
+                                                    <span class="status-circle" data-api="<%= server.api %>"></span>
+                                                    <a href="<%= server.url %>">
+                                                        <button>
+                                                            <%= server.name %>
+                                                        </button>
+                                                    </a>
+                                                </div>
+                                                <% }) %>
+                            </div>
+                            <% }) %>
+        </div>
+        <div class="card community-section">
+            <div class="card-section">
+                <% if(communityPages.length===0){ %>
+                    <h1> Could not load Community Content</h1>
+                    <% } else{ %>
+                        <h2>Community Content</h2>
+                        <% } %>
                             <% communityPages.forEach(page=> { %>
-                                <div class="comm-page">
+                                <div class="server">
                                     <a href="<%= page.url %>" target="_blank" rel="noopener noreferrer">
                                         <button class="comm-page-buttom">
                                             <%= page.title %>
@@ -57,7 +57,7 @@
                                 </div>
                                 <% }) %>
 
-                        </div>
+            </div>
         </div>
     </main>
     <script src="/dist/serverStatus.js"></script>
