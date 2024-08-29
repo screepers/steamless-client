@@ -53,7 +53,7 @@ button:active {
 main {
     height: 100vh;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
@@ -63,7 +63,8 @@ main {
     background: #222;
     border-radius: var(--size-xs);
     margin: var(--size-sm);
-    padding: var(--size-md) var(--size-sm);
+    padding: var(--size-md);
+    padding-right: var(--size-xs);
     display: flex;
     flex-direction: column;
     gap: var(--size-md);
@@ -95,11 +96,32 @@ main {
 .server {
     display: flex;
     align-items: center;
-    gap: 10px;
 }
 
 .server a {
     flex-grow: 1;
+}
+
+.community-card {
+    height: 320px;
+    right: 0;
+    bottom: 0;
+    position: fixed;
+}
+
+.comm-container {
+    overflow: hidden;
+    overflow-y: scroll;
+}
+
+.comm-page {
+    display: block;
+    align-items: center;
+    margin: 10px;
+}
+
+.comm-page-buttom {
+    width: 100%;
 }
 
 .status-circle {
@@ -107,12 +129,8 @@ main {
     width: 10px;
     height: 10px;
     border-radius: 50%;
+    margin-left: 10px;
     display: inline-block;
     box-sizing: border-box;
 }
 
-.community-section {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-}
