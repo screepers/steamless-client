@@ -72,6 +72,9 @@ services:
     image: "node:20"
     volumes:
       - ${SCREEPS_NW_PATH:?"SCREEPS_NW_PATH not set"}:/screeps.nw
+      # Defines a volume for the NPM cache to speed up startup
+      # when the container is recreated
+      - client-npm-cache:/root/.npm
     command: >
       npx screepers-steamless-client
       --package /screeps.nw
@@ -82,6 +85,11 @@ services:
     depends_on:
       - screeps
     restart: unless-stopped
+
+  # Additional services defined here...
+
+volumes:
+  client-npm-cache:
 ```
 
 ## Usage
