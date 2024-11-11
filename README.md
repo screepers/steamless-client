@@ -7,7 +7,13 @@ The Screepers Steamless Client is a web proxy for the [Screeps World](https://st
 ## Requirements
 
 - Node.js v20+ or Docker Compose v3+
-- Screeps World installed via Steam (not necessarily on the same system on which you will deploy the proxy)
+- Screeps World purchased and installed via Steam
+
+Steam and the game do not necessarily need to be installed on the same system on which you will deploy the proxy.
+**However**, the game should be legally purchased by you and installed on a system you own.
+Not only does this support the developers, but it allows you to keep your proxy up-to-date,
+as the client receives regular updates automatically via Steam. Copying the client binary
+from another system will require you to repeat that process each time the client is updated.
 
 ## Installation
 
