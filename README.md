@@ -6,8 +6,14 @@ The Screepers Steamless Client is a web proxy for the [Screeps World](https://st
 
 ## Requirements
 
-- Node.js v20+
-- Screeps World (installed using Steam)
+- Node.js v20+ or Docker Compose v3+
+- Screeps World purchased and installed via Steam
+
+Steam and the game do not necessarily need to be installed on the same system on which you will deploy the proxy.
+**However**, the game should be legally purchased by you and installed on a system you own.
+Not only does this support the developers, but it allows you to keep your proxy up-to-date,
+as the client receives regular updates automatically via Steam. Copying the client binary
+from another system will require you to repeat that process each time the client is updated.
 
 ## Installation
 
@@ -28,31 +34,62 @@ npm install -g screepers-steamless-client
 screepers-steamless-client
 ```
 
-### Run with Docker Compose
+### Install or Run with Docker Compose
 
 Use Docker Compose to run the client.
-- Download the [`compose.yaml`](compose.yaml) file and place it in an empty folder.
-- Alternatively, you can add the `client` entry from [`compose.yaml`](compose.yaml) to an existing Docker Compose configuration (e.g., combine it with a Screeps server launcher). If you do this, make sure to use the `--internal_backend` argument in the command to reference the Screeps server container address, like this:
 
+1. Clone this repository
+
+2. Locate the Screeps `package.nw` file from the Steam installation of Screeps. If you are unsure of where to find it, you can right click the game from your Steam library and select the "Browse local files" option.
+
+3. Create a `.env` file in the repo root directory and set `SCREEPS_NW_PATH` to the path of `package.nw`:
+
+    1. If you have Screeps installed on your local machine via Steam, you can reference it directly. For example, on macOS:
+        ```bash
+        SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/package.nw"
+        ```
+
+    2. If Steam and/or Screeps is not installed locally, you can copy `package.nw` from a remote system and place it in the `vendor` subdirectory:
+        ```sh
+        SCREEPS_NW_PATH="./vendor/package.nw"
+        ```
+
+4. If you want to allow remote connections, add the following line to `.env`:
+    ```sh
+    SCREEPS_PROXY_HOST="0.0.0.0"
+    ```
+
+5. Run `docker compose up`
+
+Alternatively, you can run the container without cloning the repo by using the NPX run approach from a container. This makes it easier to integrate with existing Docker Compose configurations (ex: alongside a Screeps server launcher).
+
+If your deployment includes a Screeps server, make sure to use the `--internal_backend` argument in the command to reference the Screeps server container address.
+
+Example:
 ```yaml
+services:
+  client:
+    image: "node:20"
+    volumes:
+      - ${SCREEPS_NW_PATH:?"SCREEPS_NW_PATH not set"}:/screeps.nw
+      # Defines a volume for the NPM cache to speed up startup
+      # when the container is recreated
+      - client-npm-cache:/root/.npm
     command: >
       npx screepers-steamless-client
       --package /screeps.nw
       --host 0.0.0.0
       --internal_backend http://screeps:21025
-```
+    ports:
+      - "${SCREEPS_PROXY_HOST:-127.0.0.1}:8080:8080/tcp"
+    depends_on:
+      - screeps
+    restart: unless-stopped
 
-Set up the `SCREEPS_NW_PATH` environment variable.
-- Create a `.env` file with the following content in the same folder as the compose.yaml. Replace the path with the actual path to your Screeps `package.nw` file:
+  # Additional services defined here...
 
-```bash
-SCREEPS_NW_PATH="~/Library/Application Support/Steam/steamapps/common/Screeps/package.nw"
-```
-
-Run the Docker container:
-
-```bash
-docker compose up
+volumes:
+  client-npm-cache:
 ```
 
 ## Usage

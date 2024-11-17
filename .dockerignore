@@ -1,0 +1,15 @@
+/node_modules
+/dist
+/vendor/*.nw
+.env
+
+/.git
+/.github
+/.vscode
+/docs
+/scripts
+/.dockerignore
+/.gitignore
+/compose.yaml
+/Dockerfile
+/README.md

@@ -1,12 +1,15 @@
+name: "screeps-client"
+
 services:
   client:
-    image: node:20
-    command: >
-      npx screepers-steamless-client
-      --package /screeps.nw
-      --host 0.0.0.0
+    build: .
     volumes:
       - ${SCREEPS_NW_PATH:?"SCREEPS_NW_PATH not set"}:/screeps.nw
+    command:
+      - "start"
+      - "--"
+      - "--package=/screeps.nw"
+      - "--host=0.0.0.0"
     ports:
-      - 8080:8080
+      - "${SCREEPS_PROXY_HOST:-127.0.0.1}:8080:8080/tcp"
     restart: unless-stopped
