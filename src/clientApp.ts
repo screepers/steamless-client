@@ -351,6 +351,20 @@ koa.use(async (context, next) => {
                 src = src.replace(/https:\/\/screeps.com\/a\//g, client.getURL(Route.ROOT));
             }
             return argv.beautify ? jsBeautify(src) : src;
+        } else if (urlPath === 'components/profile/profile.html') {
+            let src = await file.async('text');
+
+            // Looks like a bug in the client; `isShards()` returns true whether there's any shards on the server,
+            // and that appears to be always true. Switch to `isMultiShard()` since that one checks if there's more
+            // than one shard, which is always false on a private server. Otherwise, we will tack on the shardName,
+            // which in the case of a private server, isn't even the shard's actual name but `rooms`, leading to a
+            // broken URL.
+            src = src.replace(
+                `<img ng:src="{{Profile.mapUrl}}{{isShards() ? shardName+'/' : ''}}{{roomName}}.png">`,
+                `<img ng:src="{{Profile.mapUrl}}{{isMultiShard() ? shardName+'/' : ''}}{{roomName}}.png">`,
+            );
+
+            return src;
         } else {
             // JSZip doesn't implement their read stream correctly and it causes EPIPE crashes. Pass it
             // through a no-op transform stream first to iron that out.
