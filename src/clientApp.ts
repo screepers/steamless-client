@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import views from '@ladjs/koa-views';
 import { ArgumentParser } from 'argparse';
 import chalk from 'chalk';
