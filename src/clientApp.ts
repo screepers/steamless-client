@@ -304,6 +304,13 @@ koa.use(async (context, next) => {
                 );
                 // Remove AWS host from image URLs
                 src = src.replace(/src=t,/g, `src=t.replace("${awsHost}",""),`);
+
+                // The server sometimes sends completely broken objects which break the viewer
+                // https://discord.com/channels/860665589738635336/1337213532198142044
+                src = src.replace(
+                    't.forEach(t=>{null!==t.x&&null!==t.y&&(e(t)&&(i[t.x][t.y]=t,a=!0),o[t.x][t.y]=!1)})',
+                    't.forEach((t)=>{!(null===t.x||undefined===t.x)&&!(null===t.y||undefined===t.y)&&(e(t)&&((i[t.x][t.y]=t),(a=!0)),(o[t.x][t.y]=!1));});',
+                );
             } else if (urlPath === 'build.min.js') {
                 // Load backend info from underlying server
                 const backend = new URL(info.backend);
