@@ -327,7 +327,8 @@ koa.use(async (context, next) => {
                                     // Inject host, port, and official
                                     src = `${src.substring(0, i)},
                                         host: ${JSON.stringify(backend.hostname)},
-                                        port: ${backend.port || '80'},
+                                        protocol: "${backend.protocol}",
+                                        port: ${backend.port || (backend.protocol === 'https:' ? '443' : '80')},
                                         official: ${isOfficialLike},
                                     } ${src.substring(i + 1)}`;
                                 }
@@ -348,7 +349,10 @@ koa.use(async (context, next) => {
                 }
 
                 // Replace URLs with local client paths
-                src = src.replace(/https:\/\/screeps.com\/a\//g, client.getURL(Route.ROOT));
+                src = src.replace(/https:\/\/screeps\.com\/a\//g, client.getURL(Route.ROOT));
+
+                // Fix the hardcoded protocol in URLs
+                src = src.replace(/"http:\/\/"\+([^\.]+)\.options\.host/g, '$1.options.protocol+"//"+$1.options.host');
             }
             return argv.beautify ? jsBeautify(src) : src;
         } else if (urlPath === 'components/profile/profile.html') {
