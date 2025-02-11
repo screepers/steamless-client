@@ -1,6 +1,8 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import shebang from 'rollup-plugin-shebang-bin'
 
+/** @type {import('rollup').RollupOptions} */
 const baseConfig = {
   output: {
     dir: 'dist',
@@ -8,7 +10,8 @@ const baseConfig = {
   },
   plugins: [
     nodeResolve(),
-    typescript({ tsconfig: './tsconfig.json' })
+    typescript({ tsconfig: './tsconfig.json' }),
+    shebang({ include: "src/clientApp.ts" }),
   ],
   external: id => /node_modules/.test(id)
 };
