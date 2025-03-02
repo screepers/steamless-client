@@ -352,6 +352,12 @@ koa.use(async (context, next) => {
 
                 // Fix the hardcoded protocol in URLs
                 src = src.replace(/"http:\/\/"\+([^\.]+)\.options\.host/g, '$1.options.protocol+"//"+$1.options.host');
+
+                // Remove the default-to-place-spawn behavior when you're not spawned in
+                src = src.replace(
+                    'h.get("user/world-status").then(function(t){"empty"==t.status&&(P.selectedAction.action="spawn",',
+                    'h.get("user/world-status").then(function(t){"empty"==t.status&&(',
+                );
             }
             return argv.beautify ? jsBeautify(src) : src;
         } else if (urlPath === 'components/profile/profile.html') {
