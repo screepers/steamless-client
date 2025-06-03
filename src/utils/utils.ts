@@ -75,7 +75,7 @@ export function generateScriptTag(func: Function, args: { [key: string]: unknown
 /**
  * Utility to get the server list configuration.
  */
-export async function getServerListConfig(dirname: string, host: string, port: number, serverListPath?: string) {
+export async function getServerListConfig(dirname: string, protocol: string, host: string, port: number, useSubdomains: boolean, serverListPath?: string) {
     if (!serverListPath) {
         const serverListFile = 'server_list.json';
         serverListPath = path.join(dirname, `../settings/${serverListFile}`);
@@ -90,12 +90,15 @@ export async function getServerListConfig(dirname: string, host: string, port: n
         const serversOfType = serverConfig
             .filter((server) => server.type === type)
             .map((server) => {
-                const subdomain = host === 'localhost' && server.subdomain ? `${server.subdomain}.` : '';
+                const subdomain = useSubdomains && server.subdomain ? `${server.subdomain}.` : '';
                 const { origin, pathname } = new URL(server.url);
                 const urlpath = pathname.endsWith('/') ? pathname : `${pathname}/`;
 
-                const url = `http://${subdomain}${host}:${port}/(${origin})${urlpath}`;
-                const api = `http://${host}:${port}/(${origin})${urlpath}api/version`;
+                const protocolPort = protocol == 'https' ? 443 : 80;
+                const hostport = port == protocolPort ? host : `${host}:${port}`;
+
+                const url = `${protocol}://${subdomain}${hostport}/(${origin})${urlpath}`;
+                const api = `${protocol}://${hostport}/(${origin})${urlpath}api/version`;
                 return { ...server, url, api };
             });
 
