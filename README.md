@@ -115,6 +115,10 @@ All of the command line arguments are optional.
 - `--package` &mdash; Path to the Screeps package.nw file. Use this if the path isn't automatically detected.
 - `--host` &mdash; Changes the host address. (default: localhost)
 - `--port` &mdash; Changes the port. (default: 8080)
+- `--public_hostname` &mdash; The hostname that clients can use to access the client; useful when running in a container. (default: `--host` value)
+- `--public_port` &mdash; The port that clients can use to access the client; useful when running in a container. (default: `--port` value)
+- `--public_tls` &mdash; Whether the public address should use TLS; useful when running in a container. (default: false)
+- `--use_subdomains` &mdash; Whether the server links should use subdomains off of the public address. (default: false)
 - `--internal_backend` &mdash; Set the internal backend url when running the Screeps server in a local container. This will convert requests to a localhost backend to use the container name where the Screeps server is running.
 - `--server_list` &mdash; Path to a custom server list json config file.
 - `--beautify` &mdash; Formats .js files loaded in the client for debugging.
@@ -147,6 +151,14 @@ Run the client with your custom server list:
 
 ```sh
 npx screepers-steamless-client --server_list ./custom_server_list.json
+```
+
+### Behind a reverse proxy
+
+You can run the steamless client behind a reverse proxy (such as in a container) by specifying the public-facing hostname and port. This will ensure that the generated links use the public-facing address instead of the internal bind address.
+
+```sh
+npx screepers-steamless-client --public_hostname screeps-client.example.com --public_port 443 --public_tls --use_subdomains
 ```
 
 ## Development Scripts
