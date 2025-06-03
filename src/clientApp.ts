@@ -60,6 +60,26 @@ const argv = (() => {
         default: defaultPort,
         help: `Changes the port. (default: ${defaultPort})`,
     });
+    parser.add_argument('--public_hostname', {
+        nargs: '?',
+        type: 'str',
+        help: 'The hostname that clients can use to access the client; useful when running in a container.',
+    });
+    parser.add_argument('--public_port', {
+        nargs: '?',
+        type: 'int',
+        help: 'The port that clients can use to access the client; useful when running in a container.',
+    });
+    parser.add_argument('--public_tls', {
+        action: 'store_true',
+        default: false,
+        help: 'Whether the public address should use TLS; useful when running in a container.',
+    });
+    parser.add_argument('--use_subdomains', {
+        action: 'store_true',
+        default: false,
+        help: 'Whether the server links should use subdomains off of the public address.',
+    });
     parser.add_argument('--internal_backend', {
         nargs: '?',
         type: 'str',
@@ -89,6 +109,9 @@ const argv = (() => {
 })();
 
 const hostAddress = argv.host === '0.0.0.0' ? localhost : argv.host;
+const publicHostAddress = argv.public_hostname ? argv.public_hostname : hostAddress;
+const publicPort = argv.public_port ? argv.public_port : argv.port;
+const publicProtocol = argv.public_tls ? 'https' : 'http';
 
 const getProxyTarget = (backend: string) =>
     argv.internal_backend && backend.includes(localhost) ? argv.internal_backend : backend;
@@ -132,9 +155,15 @@ const koa = new Koa();
 const { host, port } = argv;
 const server = koa.listen(port, host);
 server.on('error', (err) => handleServerError(err, argv.debug));
-server.on('listening', () =>
-    console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${hostAddress}:${port}/`)),
-);
+server.on('listening', () => {
+    const hostport = port == 80 ? hostAddress : `${hostAddress}:${port}`;
+    console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${hostport}/`));
+    if ((publicHostAddress != hostAddress) || (publicPort != argv.port) ) {
+        const protocolPort = argv.public_tls ? 443 : 80;
+        const public_hostport = publicPort == protocolPort ? publicHostAddress : `${publicHostAddress}:${publicPort}`;
+        console.log('🌐', chalk.dim('Public', arrow), chalk.white(`${publicProtocol}://${public_hostport}/`));
+    }
+});
 
 // Get system path for public files dir
 const indexFile = 'index.ejs';
@@ -158,7 +187,8 @@ koa.use(async (ctx, next) => {
 koa.use(async (context, next) => {
     if (['/', 'index.html'].includes(context.path)) {
         const communityPages = getCommunityPages();
-        let serverList = await getServerListConfig(__dirname, hostAddress, port, argv.server_list);
+	const useSubdomains = publicHostAddress == 'localhost' || argv.use_subdomains;
+        let serverList = await getServerListConfig(__dirname, publicProtocol, publicHostAddress, publicPort, useSubdomains, argv.server_list);
         await context.render(indexFile, { serverList, communityPages });
     }
 
