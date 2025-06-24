@@ -20,11 +20,13 @@ export enum Route {
  */
 export class Client {
     private host: string;
+    private protocol: string;
     private basePath: string;
     private prefix: string;
 
-    constructor({ host, prefix, backend }: { host: string; backend: string; prefix?: string }) {
+    constructor({ host, protocol, prefix, backend }: { host: string; protocol?: string; backend: string; prefix?: string }) {
         this.host = host;
+        this.protocol = protocol || 'http';
         this.basePath = `/(${backend})`;
         this.prefix = prefix || '';
     }
@@ -37,5 +39,5 @@ export class Client {
         this.getBasePath(opts) + (opts?.prefix !== false ? this.prefix : '') + route;
 
     getURL = (route: Route, opts?: Options) =>
-        `http://${this.getHost(opts)}${this.getPath(route, { ...opts, full: false })}`;
+        `${this.protocol}://${this.getHost(opts)}${this.getPath(route, { ...opts, full: false })}`;
 }

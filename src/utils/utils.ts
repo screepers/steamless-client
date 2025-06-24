@@ -104,7 +104,7 @@ export async function getServerListConfig(dirname: string, protocol: string, hos
 
         return {
             name: type.charAt(0).toUpperCase() + type.slice(1),
-            logo: type === 'official' ? `http://${host}:${port}/(file)/logotype.svg` : undefined,
+            logo: type === 'official' ? `${protocol}://${host}:${port}/(file)/logotype.svg` : undefined,
             servers: serversOfType,
         };
     });

@@ -238,6 +238,7 @@ koa.use(async (context, next) => {
 
     const client = new Client({
         host: clientHost,
+        protocol: publicProtocol,
         prefix,
         backend: info.backend,
     });
@@ -253,7 +254,7 @@ koa.use(async (context, next) => {
                     ? `${client.getURL(Route.ROOT)}season/`
                     : client.getURL(Route.ROOT, { prefix: false });
             const ptrLink = isOfficial && !prefix ? `${client.getURL(Route.ROOT)}ptr/` : undefined;
-            const changeServerLink = `http://${trimLocalSubdomain(clientHost)}/`;
+            const changeServerLink = `${publicProtocol}://${trimLocalSubdomain(clientHost)}/`;
 
             // Inject startup script
             const header = '<title>Screeps</title>';
