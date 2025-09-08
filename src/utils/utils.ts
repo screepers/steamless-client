@@ -4,6 +4,7 @@ import path from 'path';
 import { URL } from 'url';
 import { Route, type Client } from './client';
 import { Server } from './types';
+import { logError } from './errors';
 
 export const mimeTypes = {
     '.css': 'text/css',
@@ -134,4 +135,12 @@ export function getCommunityPages(): { title: string; url: string }[] {
         { title: "Muon's blog", url: 'https://bencbartlett.com/blog/tag/screeps/' },
         { title: "Harabi's blog", url: 'https://sy-harabi.github.io/' },
     ];
+}
+
+export function applyPatch(data: string, original: string | RegExp, replace: string) {
+    const repl = data.replace(original, replace);
+    if (data.localeCompare(repl) === 0) {
+        logError(`failed to apply patch! "${original}"`);
+    }
+    return repl;
 }

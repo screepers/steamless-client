@@ -24,6 +24,7 @@ import {
     getServerListConfig,
     isOfficialLikeVersion,
     mimeTypes,
+    applyPatch,
     trimLocalSubdomain,
 } from './utils/utils';
 
@@ -271,30 +272,36 @@ koa.use(async (context, next) => {
                 generateScriptTag(roomDecorations, { backend: info.backend, awsHost }),
                 generateScriptTag(customMenuLinks, { backend: info.backend, seasonLink, ptrLink, changeServerLink }),
             ].join('\n');
-            src = src.replace(header, replaceHeader);
+            src = applyPatch(src, header, replaceHeader);
 
             // Remove tracking pixels
-            src = src.replace(
+            src = applyPatch(
+                src,
                 /<script[^>]*>[^>]*xsolla[^>]*<\/script>/g,
                 '<script>xnt = new Proxy(() => xnt, { get: () => xnt })</script>',
             );
-            src = src.replace(
+            src = applyPatch(
+                src,
                 /<script[^>]*>[^>]*facebook[^>]*<\/script>/g,
                 '<script>fbq = new Proxy(() => fbq, { get: () => fbq })</script>',
             );
-            src = src.replace(
+            src = applyPatch(
+                src,
                 /<script[^>]*>[^>]*google[^>]*<\/script>/g,
                 '<script>ga = new Proxy(() => ga, { get: () => ga })</script>',
             );
-            src = src.replace(
+            src = applyPatch(
+                src,
                 /<script[^>]*>[^>]*mxpnl[^>]*<\/script>/g,
                 '<script>mixpanel = new Proxy(() => mixpanel, { get: () => mixpanel })</script>',
             );
-            src = src.replace(
+            src = applyPatch(
+                src,
                 /<script[^>]*>[^>]*twttr[^>]*<\/script>/g,
                 '<script>twttr = new Proxy(() => twttr, { get: () => twttr })</script>',
             );
-            src = src.replace(
+            src = applyPatch(
+                src,
                 /<script[^>]*>[^>]*onRecaptchaLoad[^>]*<\/script>/g,
                 '<script>function onRecaptchaLoad(){}</script>',
             );
@@ -305,22 +312,22 @@ koa.use(async (context, next) => {
 
             // Replace API_URL, HISTORY_URL, WEBSOCKET_URL, and PREFIX in the server config
             const apiPath = client.getPath(Route.API, opts);
-            src = src.replace(/(API_URL = ')[^']*/, `$1${apiPath}/`);
+            src = applyPatch(src, /(API_URL = ')[^']*/, `$1${apiPath}/`);
 
             const historyPath = client.getPath(Route.HISTORY, opts);
-            src = src.replace(/(HISTORY_URL = ')[^']*/, `$1${historyPath}/`);
+            src = applyPatch(src, /(HISTORY_URL = ')[^']*/, `$1${historyPath}/`);
 
             const socketPath = client.getPath(Route.SOCKET, opts);
-            src = src.replace(/(WEBSOCKET_URL = ')[^']*/, `$1${socketPath}/`);
+            src = applyPatch(src, /(WEBSOCKET_URL = ')[^']*/, `$1${socketPath}/`);
 
             const prefixValue = prefix?.substring(1) || '';
-            src = src.replace(/(PREFIX: ')[^']*/, `$1${prefixValue}`);
+            src = applyPatch(src, /(PREFIX: ')[^']*/, `$1${prefixValue}`);
 
             const ptrValue = prefix === '/ptr' ? 'true' : 'false';
-            src = src.replace(/(PTR: )[^,]*/, `$1${ptrValue}`);
+            src = applyPatch(src, /(PTR: )[^,]*/, `$1${ptrValue}`);
 
             const debugValue = argv.debug ? 'true' : 'false';
-            src = src.replace(/(DEBUG: )[^,]*/, `$1${debugValue}`);
+            src = applyPatch(src, /(DEBUG: )[^,]*/, `$1${debugValue}`);
 
             return src;
         } else if (context.path.endsWith('.js')) {
@@ -328,23 +335,25 @@ koa.use(async (context, next) => {
 
             if (urlPath.startsWith('app2/main.')) {
                 // Modify getData() to fetch from the correct API path
-                src = src.replace(/fetch\(t\+"version"\)/g, 'fetch(window.CONFIG.API_URL+"version")');
+                src = applyPatch(src, /fetch\(t\+"version"\)/g, 'fetch(window.CONFIG.API_URL+"version")');
                 // Remove fetch to forum RSS feed
-                src = src.replace(/fetch\("https:\/\/screeps\.com\/forum\/.+\.rss"\)/g, 'Promise.resolve()');
+                src = applyPatch(src, /fetch\("https:\/\/screeps\.com\/forum\/.+\.rss"\)/g, 'Promise.resolve()');
                 // Remove AWS host from rewards URL
-                src = src.replace(/https:\/\/s3\.amazonaws\.com/g, '');
+                src = applyPatch(src, /https:\/\/s3\.amazonaws\.com/g, '');
             } else if (urlPath.startsWith('vendor/renderer/renderer.js')) {
                 // Modify renderer to remove AWS host from loadElement()
-                src = src.replace(
+                src = applyPatch(
+                    src,
                     /\(this\.data\.src=this\.url\)/g,
                     `(this.data.src=this.url.replace("${awsHost}",""))`,
                 );
                 // Remove AWS host from image URLs
-                src = src.replace(/src=t,/g, `src=t.replace("${awsHost}",""),`);
+                src = applyPatch(src, /src=t,/g, `src=t.replace("${awsHost}",""),`);
 
                 // The server sometimes sends completely broken objects which break the viewer
                 // https://discord.com/channels/860665589738635336/1337213532198142044
-                src = src.replace(
+                src = applyPatch(
+                    src,
                     't.forEach(t=>{null!==t.x&&null!==t.y&&(e(t)&&(i[t.x][t.y]=t,a=!0),o[t.x][t.y]=!1)})',
                     't.forEach((t)=>{!(null===t.x||undefined===t.x)&&!(null===t.y||undefined===t.y)&&(e(t)&&((i[t.x][t.y]=t),(a=!0)),(o[t.x][t.y]=!1));});',
                 );
@@ -376,23 +385,29 @@ koa.use(async (context, next) => {
                 }
                 if (!isOfficial) {
                     // Replace room-history URL
-                    src = src.replace(
+                    src = applyPatch(
+                        src,
                         /http:\/\/"\+s\.options\.host\+":"\+s\.options\.port\+"\/room-history/g,
                         client.getURL(Route.HISTORY),
                     );
 
                     // Replace official CDN with local assets
-                    src = src.replace(/https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${info.backend}/assets`);
+                    src = applyPatch(src, /https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${info.backend}/assets`);
                 }
 
                 // Replace URLs with local client paths
-                src = src.replace(/https:\/\/screeps\.com\/a\//g, client.getURL(Route.ROOT));
+                src = applyPatch(src, /https:\/\/screeps\.com\/a\//g, client.getURL(Route.ROOT));
 
                 // Fix the hardcoded protocol in URLs
-                src = src.replace(/"http:\/\/"\+([^\.]+)\.options\.host/g, '$1.options.protocol+"//"+$1.options.host');
+                src = applyPatch(
+                    src,
+                    /"http:\/\/"\+([^\.]+)\.options\.host/g,
+                    '$1.options.protocol+"//"+$1.options.host',
+                );
 
                 // Remove the default-to-place-spawn behavior when you're not spawned in
-                src = src.replace(
+                src = applyPatch(
+                    src,
                     'h.get("user/world-status").then(function(t){"empty"==t.status&&(P.selectedAction.action="spawn",',
                     'h.get("user/world-status").then(function(t){"empty"==t.status&&(',
                 );
@@ -406,7 +421,8 @@ koa.use(async (context, next) => {
             // than one shard, which is always false on a private server. Otherwise, we will tack on the shardName,
             // which in the case of a private server, isn't even the shard's actual name but `rooms`, leading to a
             // broken URL.
-            src = src.replace(
+            src = applyPatch(
+                src,
                 `<img ng:src="{{Profile.mapUrl}}{{isShards() ? shardName+'/' : ''}}{{roomName}}.png">`,
                 `<img ng:src="{{Profile.mapUrl}}{{isMultiShard() ? shardName+'/' : ''}}{{roomName}}.png">`,
             );
