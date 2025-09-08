@@ -145,7 +145,7 @@ const [data, stat] = await readPackageData();
 
 // Read package zip metadata
 const zip = new JSZip();
-await zip.loadAsync(data);
+await zip.loadAsync(new Uint8Array(data));
 
 // HTTP header is only accurate to the minute
 const lastModified = stat.mtime;
