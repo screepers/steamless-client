@@ -158,7 +158,7 @@ server.on('error', (err) => handleServerError(err, argv.debug));
 server.on('listening', () => {
     const hostport = port == 80 ? hostAddress : `${hostAddress}:${port}`;
     console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${hostport}/`));
-    if ((publicHostAddress != hostAddress) || (publicPort != argv.port) ) {
+    if (publicHostAddress != hostAddress || publicPort != argv.port) {
         const protocolPort = argv.public_tls ? 443 : 80;
         const public_hostport = publicPort == protocolPort ? publicHostAddress : `${publicHostAddress}:${publicPort}`;
         console.log('🌐', chalk.dim('Public', arrow), chalk.white(`${publicProtocol}://${public_hostport}/`));
@@ -187,8 +187,15 @@ koa.use(async (ctx, next) => {
 koa.use(async (context, next) => {
     if (['/', 'index.html'].includes(context.path)) {
         const communityPages = getCommunityPages();
-	const useSubdomains = publicHostAddress == 'localhost' || argv.use_subdomains;
-        let serverList = await getServerListConfig(__dirname, publicProtocol, publicHostAddress, publicPort, useSubdomains, argv.server_list);
+        const useSubdomains = publicHostAddress == 'localhost' || argv.use_subdomains;
+        const serverList = await getServerListConfig(
+            __dirname,
+            publicProtocol,
+            publicHostAddress,
+            publicPort,
+            useSubdomains,
+            argv.server_list,
+        );
         await context.render(indexFile, { serverList, communityPages });
     }
 
