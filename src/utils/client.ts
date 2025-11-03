@@ -24,7 +24,17 @@ export class Client {
     private basePath: string;
     private prefix: string;
 
-    constructor({ host, protocol, prefix, backend }: { host: string; protocol?: string; backend: string; prefix?: string }) {
+    constructor({
+        host,
+        protocol,
+        prefix,
+        backend,
+    }: {
+        host: string;
+        protocol?: string;
+        backend: string;
+        prefix?: string;
+    }) {
         this.host = host;
         this.protocol = protocol || 'http';
         this.basePath = `/(${backend})`;

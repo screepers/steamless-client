@@ -4,6 +4,7 @@ import path from 'path';
 import { URL } from 'url';
 import { Route, type Client } from './client';
 import { Server } from './types';
+import { logError } from './errors';
 
 export const mimeTypes = {
     '.css': 'text/css',
@@ -75,7 +76,14 @@ export function generateScriptTag(func: Function, args: { [key: string]: unknown
 /**
  * Utility to get the server list configuration.
  */
-export async function getServerListConfig(dirname: string, protocol: string, host: string, port: number, useSubdomains: boolean, serverListPath?: string) {
+export async function getServerListConfig(
+    dirname: string,
+    protocol: string,
+    host: string,
+    port: number,
+    useSubdomains: boolean,
+    serverListPath?: string,
+) {
     if (!serverListPath) {
         const serverListFile = 'server_list.json';
         serverListPath = path.join(dirname, `../settings/${serverListFile}`);
@@ -116,7 +124,10 @@ export function getCommunityPages(): { title: string; url: string }[] {
     return [
         { title: 'Screeps Wiki', url: 'https://wiki.screepspl.us/index.php/Screeps_Wiki' },
         { title: 'Community Grafana', url: 'https://pandascreeps.com/' },
-        { title: "MarvinTMB's videos", url: 'https://www.youtube.com/playlist?list=PLGlzrjCmziEj7hQZSwcmkXkMXgkQXUQ6C' },
+        {
+            title: "MarvinTMB's videos",
+            url: 'https://www.youtube.com/playlist?list=PLGlzrjCmziEj7hQZSwcmkXkMXgkQXUQ6C',
+        },
         {
             title: "Atanner's videos",
             url: 'https://www.youtube.com/watch?v=N7KMOG8C5vA&list=PLw9di5JwI6p-HUP0yPUxciaEjrsFb2kR2',
@@ -124,4 +135,12 @@ export function getCommunityPages(): { title: string; url: string }[] {
         { title: "Muon's blog", url: 'https://bencbartlett.com/blog/tag/screeps/' },
         { title: "Harabi's blog", url: 'https://sy-harabi.github.io/' },
     ];
+}
+
+export function applyPatch(data: string, original: string | RegExp, replace: string) {
+    const repl = data.replace(original, replace);
+    if (data.localeCompare(repl) === 0) {
+        logError(`failed to apply patch! "${original}"`);
+    }
+    return repl;
 }
