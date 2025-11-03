@@ -14,6 +14,7 @@ import highPerfWebGL from './highPerfWebGL';
 import placeSpawnDefaultOff from './placeSpawnDefaultOff';
 import portalInfo from './portalInfo';
 import removeTracking from './removeTracking';
+import serverStats from './serverStats';
 import stripAws from './stripAws';
 import terrainTilesProfileView from './terrainTilesProfileView';
 
@@ -29,6 +30,7 @@ const patches: AnyPatch[] = [
     fixAlphaMapBounds,
     formatMarketNumbers,
     highPerfWebGL,
+    serverStats,
     // Must be last
     beautify,
 ];
