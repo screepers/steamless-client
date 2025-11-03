@@ -137,8 +137,8 @@ export function getCommunityPages(): { title: string; url: string }[] {
     ];
 }
 
-export function applyPatch(data: string, original: string | RegExp, replace: string) {
-    const repl = data.replace(original, replace);
+export function applyPatch(data: string, original: string | RegExp, replace: string, replaceAll = false) {
+    const repl = replaceAll ? data.replaceAll(original, replace) : data.replace(original, replace);
     if (data.localeCompare(repl) === 0) {
         logError(`failed to apply patch! "${original}"`);
     }
