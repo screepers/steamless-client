@@ -37,7 +37,14 @@ export function addScreepsAudio() {
         new Audio('https://cdn.freesound.org/previews/683/683923_907124-lq.ogg'),
         new Audio('https://cdn.freesound.org/previews/683/683923_907124-lq.ogg')
     ]
-    
+
+    // https://freesound.org/people/ani_music/sounds/219619/
+    const healAudio = [
+        new Audio('https://cdn.freesound.org/previews/219/219619_3008343-lq.ogg'),
+        new Audio('https://cdn.freesound.org/previews/219/219619_3008343-lq.ogg'),
+        new Audio('https://cdn.freesound.org/previews/219/219619_3008343-lq.ogg'),
+        new Audio('https://cdn.freesound.org/previews/219/219619_3008343-lq.ogg'),
+    ]
 
     // https://freesound.org/people/FunnyVoices/sounds/709053/
     const harvestAudio = [
@@ -128,6 +135,17 @@ export function addScreepsAudio() {
                 setTimeout(() => {
                     moveAudio[i].load()
                     moveAudio[i].play()
+                }, Math.random()*300);
+            }
+        }
+
+        const healedCount = (tickDataString.match(/"healed"/g) || []).length
+        if(healedCount) {
+            console.log(`healedCount: ${healedCount}`)
+            for(let i = 0; i < Math.min(healAudio.length, healedCount); i++) {
+                setTimeout(() => {
+                    healAudio[i].load()
+                    healAudio[i].play()
                 }, Math.random()*300);
             }
         }
