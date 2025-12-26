@@ -15,6 +15,7 @@ import placeSpawnDefaultOff from './placeSpawnDefaultOff';
 import portalInfo from './portalInfo';
 import removeTracking from './removeTracking';
 import serverStats from './serverStats';
+import screepsAudio from './screepsAudio';
 import stripAws from './stripAws';
 import terrainTilesProfileView from './terrainTilesProfileView';
 import versionUpdate from './versionUpdate';
@@ -33,6 +34,7 @@ const patches: AnyPatch[] = [
     highPerfWebGL,
     serverStats,
     versionUpdate,
+    screepsAudio,
     // Must be last
     beautify,
 ];
