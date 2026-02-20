@@ -27,6 +27,7 @@ import {
     applyPatch,
     trimLocalSubdomain,
 } from './utils/utils';
+import { addScreepsAudio } from 'inject/screepsAudio';
 
 // Get the app directory and version
 const __filename = fileURLToPath(import.meta.url);
@@ -271,6 +272,7 @@ koa.use(async (context, next) => {
                 generateScriptTag(clientAuth, { backend: info.backend, guest: argv.guest }),
                 generateScriptTag(roomDecorations, { backend: info.backend, awsHost }),
                 generateScriptTag(customMenuLinks, { backend: info.backend, seasonLink, ptrLink, changeServerLink }),
+                generateScriptTag(addScreepsAudio, {})
             ].join('\n');
             src = applyPatch(src, header, replaceHeader);
 
