@@ -433,6 +433,14 @@ koa.use(async (context, next) => {
                         }
                     }
                 }
+
+                // Add an hasFeature function to help with checking specific features from the HTML pages
+                src = applyPatch(
+                    src,
+                    't.Math=Math,t.isOffServer',
+                    't.Math=Math,t.hasFeature=function(feature){var f=m.get("Api").options.serverData.features;if(!f)return false;return f.some((feat)=>feat.name===feature);},t.isOffServer',
+                );
+
                 if (!isOfficial) {
                     // Replace room-history URL
                     src = applyPatch(
@@ -487,6 +495,66 @@ koa.use(async (context, next) => {
                 src,
                 `<img ng:src="{{Profile.mapUrl}}{{isShards() ? shardName+'/' : ''}}{{roomName}}.png">`,
                 `<img ng:src="{{Profile.mapUrl}}{{isMultiShard() ? shardName+'/' : ''}}{{roomName}}.png">`,
+            );
+
+            // Stats view on profile
+            src = applyPatch(
+                src,
+                "<div class='survival' ng-if='isOffServer()'>",
+                "<div class='survival' ng-if='isOffServer() || hasFeature(\"screepsmod-stats\")'>",
+            );
+            src = applyPatch(
+                src,
+                "<div class='stats-controls' ng-if='isOffServer()'>",
+                "<div class='stats-controls' ng-if='isOffServer() || hasFeature(\"screepsmod-stats\")'>",
+            );
+            src = applyPatch(
+                src,
+                "<app-profile-stats ng-if='isOffServer()' stats='Profile.data.stats'></app-profile-stats>",
+                "<app-profile-stats ng-if='isOffServer() || hasFeature(\"screepsmod-stats\")' stats='Profile.data.stats'></app-profile-stats>",
+            );
+
+            return src;
+        } else if (urlPath === 'components/game/overview/overview.html') {
+            let src = await file.async('text');
+
+            // Enable period filter if we have stats
+            src = applyPatch(
+                src,
+                "<ui-drop-group class='btn-more' ng-if='isOffServer()'>",
+                "<ui-drop-group class='btn-more' ng-if='isOffServer() || hasFeature(\"screepsmod-stats\")'>",
+            );
+
+            // Enable leaderboard overview if we have stats
+            src = applyPatch(
+                src,
+                "<div class='overview-rank-right' ng-if='isOffServer()'>",
+                "<div class='overview-rank-right' ng-if='isOffServer() || hasFeature(\"screepsmod-stats\")'>",
+                true,
+            );
+            src = applyPatch(
+                src,
+                "<div class='overview-rank-right' ng-if='!isOffServer()'>",
+                "<div class='overview-rank-right' ng-if='!isOffServer() &amp;&amp; !hasFeature(\"screepsmod-stats\")'>",
+                true,
+            );
+            src = applyPatch(
+                src,
+                "<div class='overview-rooms-controls' ng-if='isOffServer()'>",
+                "<div class='overview-rooms-controls' ng-if='isOffServer() || hasFeature(\"screepsmod-stats\")'>",
+            );
+
+            // Show stats section
+            src = applyPatch(
+                src,
+                "<app-profile-stats ng-if='isOffServer()' normalize='false' stats='GameOverview.data.overview.totals'></app-profile-stats>",
+                "<app-profile-stats ng-if='isOffServer() || hasFeature(\"screepsmod-stats\")' normalize='false' stats='GameOverview.data.overview.totals'></app-profile-stats>",
+            );
+
+            src = applyPatch(
+                src,
+                `<img ng:src="{{GameOverview.mapUrl}}{{isShards() ? shardName+'/' : ''}}{{roomName}}.png">`,
+                `<img ng:src="{{GameOverview.mapUrl}}{{isMultiShard() ? shardName+'/' : ''}}{{roomName}}.png">`,
             );
 
             return src;
