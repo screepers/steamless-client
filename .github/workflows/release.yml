@@ -8,6 +8,11 @@ on:
       - closed
     branches:
       - main
+
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   release:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
