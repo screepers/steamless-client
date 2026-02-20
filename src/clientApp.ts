@@ -335,9 +335,9 @@ koa.use(async (context, next) => {
 
             if (urlPath.startsWith('app2/main.')) {
                 // Modify getData() to fetch from the correct API path
-                src = applyPatch(src, /fetch\(t\+"version"\)/g, 'fetch(window.CONFIG.API_URL+"version")');
+                src = applyPatch(src, /fetch\(apiUrl \+ "version"\)/g, 'fetch(window.CONFIG.API_URL+"version")');
                 // Remove fetch to forum RSS feed
-                src = applyPatch(src, /fetch\("https:\/\/screeps\.com\/forum\/.+\.rss"\)/g, 'Promise.resolve()');
+                src = applyPatch(src, /fetch\(RSS_FORUM_URL\)/g, 'Promise.resolve()');
                 // Remove AWS host from rewards URL
                 src = applyPatch(src, /https:\/\/s3\.amazonaws\.com/g, '');
             } else if (urlPath.startsWith('vendor/renderer/renderer.js')) {
