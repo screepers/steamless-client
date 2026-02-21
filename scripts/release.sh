@@ -1,10 +1,12 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
 # Get the current version from package.json
 currentVersion=$(node -p "require('./package.json').version")
 
 # Run semantic-release
-npx semantic-release
+npx semantic-release --ci
 
 # Get the new version from package.json
 newVersion=$(node -p "require('./package.json').version")
