@@ -386,9 +386,21 @@ koa.use(async (context, next) => {
                     /{{ transaction\.change\.toFixed\(3\) }}/g,
                     '{{ transaction.change.toLocaleString() }}',
                 );
-                src = src.replaceAll(
+                src = applyPatch(
+                    src,
                     /{{ transaction\.balance\.toFixed\(3\) }}/g,
                     '{{ transaction.balance.toLocaleString() }}',
+                );
+
+                // Bounds fix for the alpha map
+                // ./node_modules/@screeps/map/dist/constants.js
+                src = applyPatch(src, /exports\.MIN_SCALE = \.4;/, 'exports.MIN_SCALE = .3');
+
+                // ./src2/app/world-map.module/world-map-size.resolver.ts
+                src = applyPatch(
+                    src,
+                    /resolve\({ width: width, height: height }\);/,
+                    "resolve(shard !== 'shardSeason' ? { width: width, height: height } : { width: 512, height: 512 });",
                 );
             } else if (urlPath.startsWith('vendor/renderer/renderer.js')) {
                 // Modify renderer to remove AWS host from loadElement()
