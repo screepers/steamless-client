@@ -386,7 +386,8 @@ koa.use(async (context, next) => {
                     /{{ transaction\.change\.toFixed\(3\) }}/g,
                     '{{ transaction.change.toLocaleString() }}',
                 );
-                src = src.replaceAll(
+                src = applyPatch(
+                    src,
                     /{{ transaction\.balance\.toFixed\(3\) }}/g,
                     '{{ transaction.balance.toLocaleString() }}',
                 );
