@@ -1,9 +1,3 @@
-type Options = {
-    full?: boolean;
-    prefix?: boolean;
-    base?: boolean;
-};
-
 /**
  * Enum for the available routes in the Screeps Client
  */
@@ -41,13 +35,13 @@ export class Client {
         this.prefix = prefix || '';
     }
 
-    getHost = (opts?: Options) => this.host + (opts?.base !== false ? this.basePath : '');
+    getHost = (opts?: { base?: boolean }) => this.host + (opts?.base !== false ? this.basePath : '');
 
-    getBasePath = (opts?: Options) => (opts?.full ? this.basePath : '');
+    getBasePath = (opts?: { full?: boolean }) => (opts?.full ? this.basePath : '');
 
-    getPath = (route: Route, opts?: Options) =>
+    getPath = (route: Route, opts?: { full: boolean; prefix?: boolean }) =>
         this.getBasePath(opts) + (opts?.prefix !== false ? this.prefix : '') + route;
 
-    getURL = (route: Route, opts?: Options) =>
+    getURL = (route: Route, opts?: { base?: boolean; full?: boolean; prefix?: boolean }) =>
         `${this.protocol}://${this.getHost(opts)}${this.getPath(route, { ...opts, full: false })}`;
 }
