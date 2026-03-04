@@ -6,6 +6,18 @@
         "subdomain": "mmo"
     },
     {
+        "type": "official",
+        "name": "Public Test Realm",
+        "url": "https://screeps.com/ptr",
+        "subdomain": "ptr"
+    },
+    {
+        "type": "official",
+        "name": "Seasonal Server",
+        "url": "https://screeps.com/season",
+        "subdomain": "season"
+    },
+    {
         "type": "community",
         "name": "ScreepsPlus",
         "url": "http://server0.screepspl.us:21025",
