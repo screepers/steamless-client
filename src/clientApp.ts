@@ -106,7 +106,21 @@ const argv = (() => {
         default: false,
         help: 'Display verbose errors for development.',
     });
-    return parser.parse_args();
+    return parser.parse_args() as {
+        version?: boolean;
+        package?: string;
+        host: string;
+        port: number;
+        public_hostname?: string;
+        public_port?: number;
+        public_tls: boolean;
+        use_subdomains: boolean;
+        internal_backend?: string;
+        server_list?: string;
+        guest: boolean;
+        beautify: boolean;
+        debug: boolean;
+    };
 })();
 
 const hostAddress = argv.host === '0.0.0.0' ? localhost : argv.host;
