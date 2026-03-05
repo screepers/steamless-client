@@ -5,7 +5,7 @@ declare global {
     }
 }
 
-export interface Server {
+export interface ServerInfo {
     type: string;
     name: string;
     url: string;
