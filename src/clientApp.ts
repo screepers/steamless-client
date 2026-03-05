@@ -1,7 +1,7 @@
 import views from '@ladjs/koa-views';
 import { ArgumentParser } from 'argparse';
 import chalk from 'chalk';
-import { createReadStream, existsSync, promises as fs } from 'fs';
+import { createReadStream, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import jsBeautify from 'js-beautify';
@@ -139,21 +139,22 @@ const proxy = httpProxy.createProxyServer({ changeOrigin: true });
 proxy.on('error', (err, req, res) => handleProxyError(err, res, argv.debug));
 const awsProxy = createProxyMiddleware({ target: awsHost, changeOrigin: true });
 
-const exitOnPackageError = () => {
-    if (argv.package) {
-        logError(`Could not find the Screeps "package.nw" at the path provided.`);
-    } else {
-        logError('Use the "--package" argument to specify the path to the Screeps "package.nw" file.');
-    }
-    process.exit(1);
-};
-
 // Locate and read `package.nw`
 const readPackageData = async () => {
     const pkgPath = argv.package ?? (await getScreepsPath());
-    if (!pkgPath || !existsSync(pkgPath)) exitOnPackageError();
-    console.log('📦', chalk.dim('Package', arrow), chalk.gray(pkgPath));
-    return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch(exitOnPackageError);
+    try {
+        if (pkgPath) {
+            console.log('📦', chalk.dim('Package', arrow), chalk.gray(pkgPath));
+            return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]);
+        }
+    } catch {
+        if (argv.package) {
+            logError(`Could not find the Screeps "package.nw" at the path provided.`);
+        } else {
+            logError('Use the "--package" argument to specify the path to the Screeps "package.nw" file.');
+        }
+    }
+    return process.exit(1);
 };
 
 const [data, stat] = await readPackageData();
