@@ -128,7 +128,7 @@ console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`)
 
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
-proxy.on('error', (err, req, res) => handleProxyError(err, res, argv.debug));
+proxy.on('error', (err, _req, res) => handleProxyError(err, res, argv.debug));
 const awsProxy = createProxyMiddleware({ target: awsHost, changeOrigin: true });
 
 // Locate and read `package.nw`
@@ -427,8 +427,7 @@ koa.use(async (context, next) => {
                         if (src.charAt(i) === '}') {
                             try {
                                 const payload = src.substring(match.index!, i + 1);
-                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                                const holder = new Function(payload);
+                                const _holder = new Function(payload);
                                 if (payload.includes('apiUrl')) {
                                     // Inject host, port, and official
                                     src = `${src.substring(0, i)},

@@ -26,7 +26,7 @@ export async function isOfficialLikeVersion(server: Server) {
         const response = await fetch(versionUrl);
         const version = (await response.json()) as { serverData?: { features?: { name: string }[] } } | undefined;
         return version?.serverData?.features?.some(({ name }) => name.toLowerCase() === 'official-like') ?? false;
-    } catch (err) {
+    } catch (_err) {
         return false;
     }
 }
@@ -34,8 +34,7 @@ export async function isOfficialLikeVersion(server: Server) {
 /**
  * Utility to generate a script tag with arguments for a function.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export function generateScriptTag(func: Function, args: { [key: string]: unknown }) {
+export function generateScriptTag(func: { toString(): string }, args: { [key: string]: unknown }) {
     const scriptContent = func.toString();
     const firstBraceIndex = scriptContent.indexOf('{');
     const extractedContent = scriptContent.substring(firstBraceIndex + 1, scriptContent.length - 1);

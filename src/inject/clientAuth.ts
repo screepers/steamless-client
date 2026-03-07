@@ -53,7 +53,7 @@ export function clientAuth(backend: string, guest: boolean) {
             localStorage['users.code.activeWorld'] = JSON.stringify(
                 code.sort((a: Store, b: Store) => b.timestamp - a.timestamp).slice(0, 2),
             );
-        } catch (err) {
+        } catch (_err) {
             delete localStorage['users.code.activeWorld'];
         }
     }
