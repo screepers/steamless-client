@@ -1,7 +1,7 @@
 import views from '@ladjs/koa-views';
 import { ArgumentParser } from 'argparse';
 import chalk from 'chalk';
-import { createReadStream, existsSync, promises as fs } from 'fs';
+import { createReadStream, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import jsBeautify from 'js-beautify';
@@ -14,18 +14,16 @@ import { URL, fileURLToPath } from 'url';
 import { clientAuth } from './inject/clientAuth';
 import { customMenuLinks } from './inject/customMenuLinks';
 import { roomDecorations } from './inject/roomDecorations';
-import { Client, Route } from './utils/client';
+import { Server, Route, ServerOptions } from './utils/server';
 import { handleProxyError, handleServerError, logError } from './utils/errors';
 import { getScreepsPath } from './utils/gamePath';
 import {
-    extractBackend,
     generateScriptTag,
     getCommunityPages,
     getServerListConfig,
     isOfficialLikeVersion,
     mimeTypes,
     applyPatch,
-    trimLocalSubdomain,
 } from './utils/utils';
 
 // Get the app directory and version
@@ -106,13 +104,52 @@ const argv = (() => {
         default: false,
         help: 'Display verbose errors for development.',
     });
-    return parser.parse_args();
+    return parser.parse_args() as {
+        version?: boolean;
+        package?: string;
+        host: string;
+        port: number;
+        public_hostname?: string;
+        public_port?: number;
+        public_tls: boolean;
+        use_subdomains: boolean;
+        internal_backend?: string;
+        server_list?: string;
+        guest: boolean;
+        beautify: boolean;
+        debug: boolean;
+    };
 })();
 
-const hostAddress = argv.host === '0.0.0.0' ? localhost : argv.host;
-const publicHostAddress = argv.public_hostname ? argv.public_hostname : hostAddress;
-const publicPort = argv.public_port ? argv.public_port : argv.port;
-const publicProtocol = argv.public_tls ? 'https' : 'http';
+/** The URL Steamless is listening at (possibly within a container) */
+const hostURL = (() => {
+    const url = new URL('http://example.com');
+    url.protocol = argv.public_tls ? 'https' : 'http';
+    url.host = argv.host === '0.0.0.0' ? localhost : argv.host;
+    url.port = `${argv.port}`;
+    return url;
+})();
+
+/** The public URL Steamless is listening at */
+const publicURL =
+    (() => {
+        if (!argv.public_hostname || !argv.public_port) return null;
+        const url = new URL('http://example.com');
+        url.protocol = argv.public_tls ? 'https' : 'http';
+        url.host = argv.public_hostname;
+        url.port = `${argv.public_port}`;
+        return url;
+    })() ?? hostURL;
+
+const urlFromRequest = (host: string | undefined): URL => {
+    if (host) {
+        const url = new URL('http://example.com');
+        url.protocol = argv.public_tls ? 'https' : 'http';
+        url.host = host;
+        return url;
+    }
+    return publicURL;
+};
 
 const getProxyTarget = (backend: string) =>
     argv.internal_backend && backend.includes(localhost) ? argv.internal_backend : backend;
@@ -125,21 +162,22 @@ const proxy = httpProxy.createProxyServer({ changeOrigin: true });
 proxy.on('error', (err, req, res) => handleProxyError(err, res, argv.debug));
 const awsProxy = createProxyMiddleware({ target: awsHost, changeOrigin: true });
 
-const exitOnPackageError = () => {
-    if (argv.package) {
-        logError(`Could not find the Screeps "package.nw" at the path provided.`);
-    } else {
-        logError('Use the "--package" argument to specify the path to the Screeps "package.nw" file.');
-    }
-    process.exit(1);
-};
-
 // Locate and read `package.nw`
 const readPackageData = async () => {
     const pkgPath = argv.package ?? (await getScreepsPath());
-    if (!pkgPath || !existsSync(pkgPath)) exitOnPackageError();
-    console.log('📦', chalk.dim('Package', arrow), chalk.gray(pkgPath));
-    return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]).catch(exitOnPackageError);
+    try {
+        if (pkgPath) {
+            console.log('📦', chalk.dim('Package', arrow), chalk.gray(pkgPath));
+            return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]);
+        }
+    } catch {
+        if (argv.package) {
+            logError(`Could not find the Screeps "package.nw" at the path provided.`);
+        } else {
+            logError('Use the "--package" argument to specify the path to the Screeps "package.nw" file.');
+        }
+    }
+    return process.exit(1);
 };
 
 const [data, stat] = await readPackageData();
@@ -157,12 +195,9 @@ const { host, port } = argv;
 const server = koa.listen(port, host);
 server.on('error', (err) => handleServerError(err, argv.debug));
 server.on('listening', () => {
-    const hostport = port == 80 ? hostAddress : `${hostAddress}:${port}`;
-    console.log('🌐', chalk.dim('Ready', arrow), chalk.white(`http://${hostport}/`));
-    if (publicHostAddress != hostAddress || publicPort != argv.port) {
-        const protocolPort = argv.public_tls ? 443 : 80;
-        const public_hostport = publicPort == protocolPort ? publicHostAddress : `${publicHostAddress}:${publicPort}`;
-        console.log('🌐', chalk.dim('Public', arrow), chalk.white(`${publicProtocol}://${public_hostport}/`));
+    console.log('🌐', chalk.dim('Ready', arrow), chalk.white(hostURL));
+    if (publicURL !== hostURL) {
+        console.log('🌐', chalk.dim('Public', arrow), chalk.white(publicURL));
     }
 });
 
@@ -188,15 +223,8 @@ koa.use(async (ctx, next) => {
 koa.use(async (context, next) => {
     if (['/', 'index.html'].includes(context.path)) {
         const communityPages = getCommunityPages();
-        const useSubdomains = publicHostAddress == 'localhost' || argv.use_subdomains;
-        const serverList = await getServerListConfig(
-            __dirname,
-            publicProtocol,
-            publicHostAddress,
-            publicPort,
-            useSubdomains,
-            argv.server_list,
-        );
+        const useSubdomains = (publicURL ?? hostURL).hostname == 'localhost' || argv.use_subdomains;
+        const serverList = await getServerListConfig(__dirname, publicURL, useSubdomains, argv.server_list);
         await context.render(indexFile, { serverList, communityPages });
     }
 
@@ -226,14 +254,13 @@ koa.use((context, next) => {
 
 // Serve client assets
 koa.use(async (context, next) => {
-    const info = extractBackend(context.path);
-    if (!info) return;
+    const server = Server.fromRequest(urlFromRequest(context.header.host), context.path);
+    if (!server) return;
 
-    const isOfficial = info.backend === 'https://screeps.com';
-    const prefix = isOfficial ? info.endpoint.match(/^\/(season|ptr)/)?.[0] : undefined;
+    const { backend, endpoint, isOfficial, backendPath } = server;
 
-    const endpointFilePath = prefix ? info.endpoint.replace(prefix, '') : info.endpoint;
-    const urlPath = endpointFilePath === '/' ? 'index.html' : endpointFilePath.substring(1);
+    // We do this to not get caught in the server-side redirect
+    const urlPath = endpoint === '/' ? 'index.html' : endpoint.substring(1);
 
     const file = zip.files[urlPath];
     if (!file) return next();
@@ -242,35 +269,27 @@ koa.use(async (context, next) => {
     context.lastModified = lastModified;
     if (context.fresh) return;
 
-    const clientHost = context.header.host || `${hostAddress}:${port}`;
-
-    const client = new Client({
-        host: clientHost,
-        protocol: publicProtocol,
-        prefix,
-        backend: info.backend,
-    });
-
     // Rewrite various payloads
     context.body = await (async function () {
         if (urlPath === 'index.html') {
             let src = await file.async('text');
 
             // Client app menu links
-            const seasonLink =
-                isOfficial && !prefix
-                    ? `${client.getURL(Route.ROOT)}season/`
-                    : client.getURL(Route.ROOT, { prefix: false });
-            const ptrLink = isOfficial && !prefix ? `${client.getURL(Route.ROOT)}ptr/` : undefined;
-            const changeServerLink = `${publicProtocol}://${trimLocalSubdomain(clientHost)}/`;
+            const seasonLink = isOfficial
+                ? server.getURL(Route.ROOT, { backend: 'https://screeps.com/season', path: false })
+                : server.getURL(Route.ROOT, { path: false });
+            const ptrLink = isOfficial
+                ? server.getURL(Route.ROOT, { backend: 'https://screeps.com/ptr', path: false })
+                : undefined;
+            const changeServerLink = server.getURL(Route.ROOT, { subdomain: false, backend: false, path: false });
 
             // Inject startup script
             const header = '<title>Screeps</title>';
             const replaceHeader = [
                 header,
-                generateScriptTag(clientAuth, { backend: info.backend, guest: argv.guest }),
-                generateScriptTag(roomDecorations, { backend: info.backend, awsHost }),
-                generateScriptTag(customMenuLinks, { backend: info.backend, seasonLink, ptrLink, changeServerLink }),
+                generateScriptTag(clientAuth, { backend, guest: argv.guest }),
+                generateScriptTag(roomDecorations, { backend, awsHost }),
+                generateScriptTag(customMenuLinks, { backend, seasonLink, ptrLink, changeServerLink }),
             ].join('\n');
             src = applyPatch(src, header, replaceHeader);
 
@@ -308,26 +327,36 @@ koa.use(async (context, next) => {
             return src;
         } else if (urlPath === 'config.js') {
             let src = await file.async('text');
-            const opts = { full: true };
+            const opts: ServerOptions = { backend: true, path: false };
 
             // Replace API_URL, HISTORY_URL, WEBSOCKET_URL, and PREFIX in the server config
-            const apiPath = client.getPath(Route.API, opts);
+            const apiPath = server.getURL(Route.API, opts);
             src = applyPatch(src, /(API_URL = ')[^']*/, `$1${apiPath}/`);
 
-            const historyPath = client.getPath(Route.HISTORY, opts);
+            const historyPath = server.getURL(Route.HISTORY, {
+                ...opts,
+                // Season actually shares history storage with MMO, so just override
+                backend: server.isSeason ? 'https://screeps.com/' : undefined,
+            });
             src = applyPatch(src, /(HISTORY_URL = ')[^']*/, `$1${historyPath}/`);
 
-            const socketPath = client.getPath(Route.SOCKET, opts);
+            const socketPath = server.getURL(Route.SOCKET, opts);
             src = applyPatch(src, /(WEBSOCKET_URL = ')[^']*/, `$1${socketPath}/`);
 
-            const prefixValue = prefix?.substring(1) || '';
-            src = applyPatch(src, /(PREFIX: ')[^']*/, `$1${prefixValue}`);
+            const prefixValue = backendPath?.substring(1) || '';
+            if (prefixValue) {
+                src = applyPatch(src, /(PREFIX: ')[^']*/, `$1${prefixValue}`);
+            }
 
-            const ptrValue = prefix === '/ptr' ? 'true' : 'false';
-            src = applyPatch(src, /(PTR: )[^,]*/, `$1${ptrValue}`);
+            const ptrValue = server.isPtr ? 'true' : 'false';
+            if (server.isPtr) {
+                src = applyPatch(src, /(PTR: )[^,]*/, `$1${ptrValue}`);
+            }
 
             const debugValue = argv.debug ? 'true' : 'false';
-            src = applyPatch(src, /(DEBUG: )[^,]*/, `$1${debugValue}`);
+            if (argv.debug) {
+                src = applyPatch(src, /(DEBUG: )[^,]*/, `$1${debugValue}`);
+            }
 
             return src;
         } else if (context.path.endsWith('.js')) {
@@ -421,8 +450,8 @@ koa.use(async (context, next) => {
                 );
             } else if (urlPath === 'build.min.js') {
                 // Load backend info from underlying server
-                const backend = new URL(info.backend);
-                const isOfficialLike = isOfficial || (await isOfficialLikeVersion(client));
+                const backendURL = new URL(backend);
+                const isOfficialLike = isOfficial || (await isOfficialLikeVersion(server));
                 // Look for server options payload in build information
                 for (const match of src.matchAll(/\boptions=\{/g)) {
                     for (let i = match.index!; i < src.length; ++i) {
@@ -434,9 +463,9 @@ koa.use(async (context, next) => {
                                 if (payload.includes('apiUrl')) {
                                     // Inject host, port, and official
                                     src = `${src.substring(0, i)},
-                                        host: ${JSON.stringify(backend.hostname)},
-                                        protocol: "${backend.protocol}",
-                                        port: ${backend.port || (backend.protocol === 'https:' ? '443' : '80')},
+                                        host: ${JSON.stringify(backendURL.hostname)},
+                                        protocol: "${backendURL.protocol}",
+                                        port: ${backendURL.port || (backendURL.protocol === 'https:' ? '443' : '80')},
                                         official: ${isOfficialLike},
                                     } ${src.substring(i + 1)}`;
                                 }
@@ -450,15 +479,15 @@ koa.use(async (context, next) => {
                     src = applyPatch(
                         src,
                         /http:\/\/"\+s\.options\.host\+":"\+s\.options\.port\+"\/room-history/g,
-                        client.getURL(Route.HISTORY),
+                        server.getURL(Route.HISTORY, { path: false }),
                     );
 
                     // Replace official CDN with local assets
-                    src = applyPatch(src, /https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${info.backend}/assets`);
+                    src = applyPatch(src, /https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${backendURL}/assets`);
                 }
 
                 // Replace URLs with local client paths
-                src = applyPatch(src, /https:\/\/screeps\.com\/a\//g, client.getURL(Route.ROOT));
+                src = applyPatch(src, /https:\/\/screeps\.com\/a\//g, server.getURL(Route.ROOT, { path: false }));
 
                 // Fix the hardcoded protocol in URLs
                 src = applyPatch(
@@ -558,16 +587,19 @@ koa.use((context, next) => {
         return;
     }
 
-    const info = extractBackend(context.url);
-    if (info) {
+    const client = Server.fromRequest(urlFromRequest(context.header.host), context.url);
+    if (client) {
+        const { backend, endpoint } = client;
+
         context.respond = false;
-        context.req.url = info.endpoint;
-        if (info.endpoint.startsWith('/api/auth')) {
-            const returnUrl = encodeURIComponent(info.backend);
-            const separator = info.endpoint.endsWith('?') ? '' : info.endpoint.includes('?') ? '&' : '?';
-            context.req.url = `${info.endpoint}${separator}returnUrl=${returnUrl}`;
+        context.req.url = endpoint;
+        if (endpoint.startsWith('/api/auth')) {
+            const returnUrl = encodeURIComponent(backend);
+            const separator = endpoint.endsWith('?') ? '' : endpoint.includes('?') ? '&' : '?';
+            context.req.url = `${endpoint}${separator}returnUrl=${returnUrl}`;
         }
-        const target = getProxyTarget(info.backend);
+        // XXX: this still needs to move
+        const target = getProxyTarget(backend);
         proxy.web(context.req, context.res, { target });
         return;
     }
@@ -576,10 +608,11 @@ koa.use((context, next) => {
 
 // Proxy WebSocket requests
 server.on('upgrade', (req, socket, head) => {
-    const info = extractBackend(req.url!);
-    if (info && req.headers.upgrade?.toLowerCase() === 'websocket') {
-        req.url = info.endpoint;
-        const target = getProxyTarget(info.backend);
+    const server = Server.fromRequest(urlFromRequest(req.headers.host), req.url!);
+
+    if (server && req.headers.upgrade?.toLowerCase() === 'websocket') {
+        req.url = server.endpoint;
+        const target = getProxyTarget(server.backend);
         proxy.ws(req, socket, head, { target });
         socket.on('error', (err) => {
             if (argv.debug) logError(err);

@@ -1,9 +1,8 @@
 import { existsSync, promises as fs } from 'fs';
 import fetch from 'node-fetch';
 import path from 'path';
-import { URL } from 'url';
-import { Route, type Client } from './client';
-import { Server } from './types';
+import { Server, Route } from './server';
+import { ServerInfo } from './types';
 import { logError } from './errors';
 
 export const mimeTypes = {
@@ -21,40 +20,15 @@ export const mimeTypes = {
 /**
  * Check if the server is running an official-like version of the Screeps server (xxscreeps).
  */
-export async function isOfficialLikeVersion(client: Client) {
+export async function isOfficialLikeVersion(server: Server) {
     try {
-        const versionUrl = `${client.getURL(Route.API)}/version`;
+        const versionUrl = server.getURL(Route.VERSION, { path: false });
         const response = await fetch(versionUrl);
         const version = (await response.json()) as { serverData?: { features?: { name: string }[] } } | undefined;
         return version?.serverData?.features?.some(({ name }) => name.toLowerCase() === 'official-like') ?? false;
     } catch (err) {
         return false;
     }
-}
-
-/**
- * Extract the backend and endpoint from a URL.
- */
-export function extractBackend(url: string) {
-    const groups = /^\/\((?<backend>[^)]+)\)(?<endpoint>\/.*)$/.exec(url)?.groups;
-    if (groups) {
-        return {
-            backend: groups.backend.replace(/\/+$/, ''),
-            endpoint: groups.endpoint,
-        };
-    }
-}
-
-/**
- * Utility to trim the local subdomain from a host string.
- */
-export function trimLocalSubdomain(host: string): string {
-    const parts = host.split('.');
-    const localhostIndex = parts.findIndex((p) => p.includes('localhost'));
-    if (localhostIndex !== -1) {
-        host = parts[localhostIndex];
-    }
-    return host;
 }
 
 /**
@@ -78,9 +52,7 @@ export function generateScriptTag(func: Function, args: { [key: string]: unknown
  */
 export async function getServerListConfig(
     dirname: string,
-    protocol: string,
-    host: string,
-    port: number,
+    publicUrl: URL,
     useSubdomains: boolean,
     serverListPath?: string,
 ) {
@@ -92,27 +64,24 @@ export async function getServerListConfig(
         }
     }
 
-    const serverConfig: Server[] = JSON.parse(await fs.readFile(serverListPath, 'utf-8'));
+    const serverConfig: ServerInfo[] = JSON.parse(await fs.readFile(serverListPath, 'utf-8'));
     const serverTypes = Array.from(new Set(serverConfig.map((server) => server.type)));
     const serverList = serverTypes.map((type) => {
         const serversOfType = serverConfig
-            .filter((server) => server.type === type)
-            .map((server) => {
-                const subdomain = useSubdomains && server.subdomain ? `${server.subdomain}.` : '';
-                const { origin, pathname } = new URL(server.url);
-                const urlpath = pathname.endsWith('/') ? pathname : `${pathname}/`;
-
-                const protocolPort = protocol == 'https' ? 443 : 80;
-                const hostport = port == protocolPort ? host : `${host}:${port}`;
-
-                const url = `${protocol}://${subdomain}${hostport}/(${origin})${urlpath}`;
-                const api = `${protocol}://${hostport}/(${origin})${urlpath}api/version`;
-                return { ...server, url, api };
+            .filter((info) => info.type === type)
+            .map((info) => {
+                const server = Server.fromInfo(publicUrl, info.url, useSubdomains ? info.subdomain : '');
+                return {
+                    ...info,
+                    url: server.getURL(Route.ROOT),
+                    // We skip the subdomain here to keep CORS happy
+                    api: server.getURL(Route.VERSION, { subdomain: false }),
+                };
             });
 
         return {
             name: type.charAt(0).toUpperCase() + type.slice(1),
-            logo: type === 'official' ? `${protocol}://${host}:${port}/(file)/logotype.svg` : undefined,
+            logo: type === 'official' ? `${publicUrl.toString()}(file)/logotype.svg` : undefined,
             servers: serversOfType,
         };
     });
