@@ -1,5 +1,4 @@
-type AnyObject = Record<PropertyKey, unknown>;
-type AnyProps = string | AnyObject | AnyProps[];
+type DeepValue = string | { [key: string]: DeepValue } | DeepValue[];
 
 /**
  * This function is injected into the client to modify room decorations.
@@ -10,16 +9,14 @@ export function roomDecorations(backend: string, awsHost: string) {
     }
 
     // Recursive function to remove AWS host from room decoration URLs
-    const removeAWSHost = (obj: AnyProps): AnyProps => {
+    const removeAWSHost = (obj: DeepValue): DeepValue => {
         if (typeof obj === 'string') {
             return obj.replace(awsHost, '');
         } else if (Array.isArray(obj)) {
-            return obj.map(removeAWSHost) as AnyProps;
+            return obj.map(removeAWSHost) as DeepValue;
         } else if (obj && typeof obj === 'object') {
             for (const key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    obj[key] = removeAWSHost(obj[key] as AnyProps);
-                }
+                obj[key] = removeAWSHost(obj[key] as DeepValue);
             }
         }
         return obj;
