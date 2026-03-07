@@ -1,5 +1,5 @@
 import views from '@ladjs/koa-views';
-import { ArgumentParser } from 'argparse';
+import { Command } from 'commander';
 import chalk from 'chalk';
 import { createReadStream, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
@@ -38,87 +38,56 @@ const localhost = 'localhost';
 const defaultPort = 8080;
 const awsHost = 'https://s3.amazonaws.com';
 
+interface Args {
+    package?: string;
+    host: string;
+    port: number;
+    public_hostname?: string;
+    public_port?: number;
+    public_tls: boolean;
+    use_subdomains: boolean;
+    internal_backend?: string;
+    server_list?: string;
+    guest: boolean;
+    beautify: boolean;
+    debug: boolean;
+}
+
 // Parse program arguments
-const argv = (() => {
-    const parser = new ArgumentParser({ description: 'Web proxy for the Screeps World game client.' });
-    parser.add_argument('-v', '--version', { action: 'version', version: `v${version}` });
-    parser.add_argument('--package', {
-        nargs: '?',
-        type: 'str',
-        help: "Path to the Screeps package.nw file. Use this if the path isn't automatically detected.",
-    });
-    parser.add_argument('--host', {
-        nargs: '?',
-        type: 'str',
-        default: localhost,
-        help: `Changes the host address. (default: ${localhost})`,
-    });
-    parser.add_argument('--port', {
-        nargs: '?',
-        type: 'int',
-        default: defaultPort,
-        help: `Changes the port. (default: ${defaultPort})`,
-    });
-    parser.add_argument('--public_hostname', {
-        nargs: '?',
-        type: 'str',
-        help: 'The hostname that clients can use to access the client; useful when running in a container.',
-    });
-    parser.add_argument('--public_port', {
-        nargs: '?',
-        type: 'int',
-        help: 'The port that clients can use to access the client; useful when running in a container.',
-    });
-    parser.add_argument('--public_tls', {
-        action: 'store_true',
-        default: false,
-        help: 'Whether the public address should use TLS; useful when running in a container.',
-    });
-    parser.add_argument('--use_subdomains', {
-        action: 'store_true',
-        default: false,
-        help: 'Whether the server links should use subdomains off of the public address.',
-    });
-    parser.add_argument('--internal_backend', {
-        nargs: '?',
-        type: 'str',
-        help: 'Set the internal backend url when running the Screeps server in a local container.',
-    });
-    parser.add_argument('--server_list', {
-        nargs: '?',
-        type: 'str',
-        help: 'Path to a custom server list json config file.',
-    });
-    parser.add_argument('--guest', {
-        action: 'store_true',
-        default: false,
-        help: 'Enable guest mode for xxscreeps.',
-    });
-    parser.add_argument('--beautify', {
-        action: 'store_true',
-        default: false,
-        help: 'Formats .js files loaded in the client for debugging.',
-    });
-    parser.add_argument('--debug', {
-        action: 'store_true',
-        default: false,
-        help: 'Display verbose errors for development.',
-    });
-    return parser.parse_args() as {
-        version?: boolean;
-        package?: string;
-        host: string;
-        port: number;
-        public_hostname?: string;
-        public_port?: number;
-        public_tls: boolean;
-        use_subdomains: boolean;
-        internal_backend?: string;
-        server_list?: string;
-        guest: boolean;
-        beautify: boolean;
-        debug: boolean;
-    };
+const argv: Args = (() => {
+    const program = new Command();
+    program
+        .name('screepers-steamless-client')
+        .description('Web proxy for the Screeps World game client.')
+        .version(version, '-v, --version', 'Display version number')
+        .option(
+            '--package <path>',
+            "Path to the Screeps package.nw file. Use this if the path isn't automatically detected.",
+        )
+        .option('--host <address>', `Changes the host address. (default: ${localhost})`, localhost)
+        .option('--port <number>', `Changes the port. (default: ${defaultPort})`, parseInt, defaultPort)
+        .option(
+            '--public_hostname <hostname>',
+            'The hostname that clients can use to access the client; useful when running in a container.',
+        )
+        .option(
+            '--public_port <number>',
+            'The port that clients can use to access the client; useful when running in a container.',
+            parseInt,
+        )
+        .option('--public_tls', 'Whether the public address should use TLS; useful when running in a container.', false)
+        .option('--use_subdomains', 'Whether the server links should use subdomains off of the public address.', false)
+        .option(
+            '--internal_backend <url>',
+            'Set the internal backend url when running the Screeps server in a local container.',
+        )
+        .option('--server_list <path>', 'Path to a custom server list json config file.')
+        .option('--guest', 'Enable guest mode for xxscreeps.', false)
+        .option('--beautify', 'Formats .js files loaded in the client for debugging.', false)
+        .option('--debug', 'Display verbose errors for development.', false);
+
+    program.parse();
+    return program.opts();
 })();
 
 /** The URL Steamless is listening at (possibly within a container) */
