@@ -555,9 +555,9 @@ koa.use((context, next) => {
         return;
     }
 
-    const client = Server.fromRequest(urlFromRequest(context.header.host), context.url);
-    if (client) {
-        const { backend, endpoint } = client;
+    const server = Server.fromRequest(urlFromRequest(context.header.host), context.url);
+    if (server) {
+        const { backend, endpoint } = server;
 
         context.respond = false;
         context.req.url = endpoint;
