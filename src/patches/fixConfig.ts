@@ -46,9 +46,23 @@ const patch: MultiPatch = {
         },
         {
             match: (url: string) => url === 'app2/main.js',
-            async apply(src: string) {
-                // Modify getData() to fetch from the correct API path
-                src = applyPatch(src, /fetch\(apiUrl \+ "version"\)/g, 'fetch(window.CONFIG.API_URL+"version")');
+            async apply(src: string, server: Server) {
+                // Some menu items have a config with an API_URL in them; try to transform them so they go through the proxy
+                const url = server.getPublicUrl({ backend: 'BACKEND' });
+                function urlReplacer(apiUrl: string) {
+                    const match = apiUrl.match(/^(https:\/\/screeps\.com\/(?:season\/)?)(.*)$/);
+                    if (!match) return apiUrl;
+                    const [backend, url] = [match[1] ?? '', match[2] ?? ''];
+                    return `URL`.replace('BACKEND', backend) + '/' + url;
+                }
+                let urlReplacerStr = urlReplacer.toString();
+                urlReplacerStr = applyPatch(urlReplacerStr, 'URL', url);
+                src = applyPatch(
+                    src,
+                    /this\._versionSrv\.getData\((item\.config\.API_URL)\)\.then\(function \(versionData\)/,
+                    `${urlReplacerStr}\nthis._versionSrv.getData(urlReplacer($1)).then(function (versionData)`,
+                );
+
                 // Remove fetch to forum RSS feed
                 src = applyPatch(src, /fetch\(RSS_FORUM_URL\)/g, 'Promise.resolve()');
                 return src;
