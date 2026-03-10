@@ -400,6 +400,14 @@ koa.use(async (context, next) => {
                     /resolve\({ width: width, height: height }\);/,
                     "resolve(shard !== 'shardSeason' ? { width: width, height: height } : { width: 512, height: 512 });",
                 );
+
+                // Fix alpha map decoration loads to AWS by sending them through the proxy set up for the injected roomDecorations CORS fix
+                // getTextureByUrl() in ./node_modules/@screeps/map/dist/utils.js
+                src = applyPatch(
+                    src,
+                    /const img = await loadImage\(url\);/,
+                    "const img = await loadImage(url.replace('https://s3.amazonaws.com/static.screeps.com/', '/static.screeps.com/'));",
+                );
             } else if (urlPath.startsWith('vendor/renderer/renderer.js')) {
                 // Modify renderer to remove AWS host from loadElement()
                 src = applyPatch(
