@@ -65,7 +65,12 @@ const argv: Args = (() => {
             "Path to the Screeps package.nw file. Use this if the path isn't automatically detected.",
         )
         .option('--host <address>', `Changes the host address. (default: ${localhost})`, localhost)
-        .option('--port <number>', `Changes the port. (default: ${defaultPort})`, parseInt, defaultPort)
+        .option(
+            '--port <number>',
+            `Changes the port. (default: ${defaultPort})`,
+            (val) => parseInt(val, 10),
+            defaultPort,
+        )
         .option(
             '--public_hostname <hostname>',
             'The hostname that clients can use to access the client; useful when running in a container.',
@@ -73,7 +78,7 @@ const argv: Args = (() => {
         .option(
             '--public_port <number>',
             'The port that clients can use to access the client; useful when running in a container.',
-            parseInt,
+            (val) => parseInt(val, 10),
         )
         .option('--public_tls', 'Whether the public address should use TLS; useful when running in a container.', false)
         .option('--use_subdomains', 'Whether the server links should use subdomains off of the public address.', false)
