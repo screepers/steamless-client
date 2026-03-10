@@ -405,6 +405,14 @@ koa.use(async (context, next) => {
                     /resolve\({ width: width, height: height }\);/,
                     "resolve(shard !== 'shardSeason' ? { width: width, height: height } : { width: 512, height: 512 });",
                 );
+
+                // Fix alpha map decoration loads to AWS by sending them through the proxy set up for the injected roomDecorations CORS fix
+                // getTextureByUrl() in ./node_modules/@screeps/map/dist/utils.js
+                src = applyPatch(
+                    src,
+                    /const img = await loadImage\(url\);/,
+                    "const img = await loadImage(url.replace('https://s3.amazonaws.com/static.screeps.com/', '/static.screeps.com/'));",
+                );
             } else if (urlPath.startsWith('vendor/renderer/renderer.js')) {
                 // Modify renderer to remove AWS host from loadElement()
                 src = applyPatch(
@@ -474,18 +482,6 @@ koa.use(async (context, next) => {
                     src,
                     'h.get("user/world-status").then(function(t){"empty"==t.status&&(P.selectedAction.action="spawn",',
                     'h.get("user/world-status").then(function(t){"empty"==t.status&&(',
-                );
-
-                // The server sometimes sends completely broken objects which break the viewer
-                // https://discord.com/channels/860665589738635336/1337213532198142044
-                // https://github.com/screeps/engine/blob/master/src/processor/intents/_create-energy.js#L49
-                // In this case, objects that were bulk-inserted this tick have an id that's a number
-                // This breaks because the for…in loop makes `o` a string, which the `_.find` call sees as different
-                // 'function U(e,t){for(var o in t){t[o]&&(t[o]._id=""+t[o]._id);var r=t[o],n=_.find(e,{_id:o});n?null!==r',
-                src = applyPatch(
-                    src,
-                    'function U(e,t){for(var o in t){var r=t[o],n=_.find(e,{_id:o});n?null!==r',
-                    'function U(e,t){for(var o in t){t[o]&&typeof t[o]._id!=="string"&&(t[o]._id=""+o);var r=t[o],n=_.find(e,{_id:o});n?null!==r',
                 );
             }
             return argv.beautify ? jsBeautify(src) : src;
