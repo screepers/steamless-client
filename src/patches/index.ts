@@ -33,6 +33,28 @@ const patches: AnyPatch[] = [
     beautify,
 ];
 
+export function listPatches() {
+    let msg = `List of supported patch ids:\n`;
+    const maxIdLen = patches.reduce((len, patch) => (patch.id.length > len ? patch.id.length : len), 0);
+    for (const patch of patches.sort((a, b) => a.id.localeCompare(b.id))) {
+        msg += ` ${' '.padStart(maxIdLen - patch.id.length + 1, ' ')}${patch.id} - ${patch.description}${patch.disabled ? ' (disabled)' : ''}\n`;
+    }
+    console.log(msg);
+}
+
+export function checkPatches(yesPatch: Set<string>, noPatch: Set<string>) {
+    const patchDiff = yesPatch.intersection(noPatch);
+    if (patchDiff.size) {
+        logError(`patch ids ${[...patchDiff].join(', ')} are in both --patch and --no_patch`);
+        process.exit(1);
+    }
+    for (const id of [...yesPatch, ...noPatch]) {
+        if (patches.find((p) => p.id === id)) continue;
+        logError(`unknown patch id '${id}'`);
+        process.exit(1);
+    }
+}
+
 export function hasPatches(urlPath: string): boolean {
     return patches.some((patch) => {
         const subpatches = 'match' in patch ? [patch] : patch.patches;
@@ -48,6 +70,16 @@ export async function applyPatches(urlPath: string, source: string, server: Serv
     };
 
     for (const patch of patches) {
+        if (argv.no_patch.has(patch.id)) {
+            debug(`not applying patch '${patch.id}'`);
+            continue;
+        }
+        if (patch.disabled) {
+            if (!argv.patch.has(patch.id)) {
+                continue;
+            }
+            debug(`applying disabled patch '${patch.id}'`);
+        }
         debug(`applying patch '${patch.id}' to ${urlPath}…`);
         const patches = 'apply' in patch ? [patch] : patch.patches;
         let applied = false;

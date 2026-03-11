@@ -3,6 +3,7 @@ import { Server } from 'utils/server';
 
 const patch: Patch = {
     id: 'broken-replays',
+    description: 'Workaround some data problems with history files',
     match: (url: string) => url === 'vendor/renderer/renderer.js',
     async apply(src: string, _server: Server) {
         // The server sometimes sends completely broken objects which break the viewer

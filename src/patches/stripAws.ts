@@ -5,6 +5,7 @@ import { roomDecorations } from 'inject/roomDecorations';
 
 const patch: MultiPatch = {
     id: 'strip-aws',
+    description: '(Core) Replace references to AWS',
     patches: [
         {
             match: (url: string) => url === 'index.html',

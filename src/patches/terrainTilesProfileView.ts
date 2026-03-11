@@ -2,6 +2,7 @@ import { applyPatch, Patch } from './helpers';
 
 const patch: Patch = {
     id: 'terrain-tiles-profile-view',
+    description: 'Fix broken terrain tiles in the user profile',
     match: (url: string) => url === 'components/profile/profile.html',
     async apply(src: string) {
         // Looks like a bug in the client; `isShards()` returns true whether there's any shards on the server,

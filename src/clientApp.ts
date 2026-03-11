@@ -14,7 +14,7 @@ import { AWS_HOST, Server } from './utils/server';
 import { handleProxyError, handleServerError, logError } from './utils/errors';
 import { getScreepsPath } from './utils/gamePath';
 import { getCommunityPages, getServerListConfig, mimeTypes } from './utils/utils';
-import { applyPatches, hasPatches } from 'patches';
+import { applyPatches, checkPatches, hasPatches, listPatches } from 'patches';
 
 // Get the app directory and version
 const __filename = fileURLToPath(import.meta.url);
@@ -40,6 +40,9 @@ export interface Args {
     guest: boolean;
     beautify: boolean;
     debug: boolean;
+    list_patches: boolean;
+    patch: Set<string>;
+    no_patch: Set<string>;
 }
 
 // Parse program arguments
@@ -78,11 +81,36 @@ const argv: Args = (() => {
         .option('--server_list <path>', 'Path to a custom server list json config file.')
         .option('--guest', 'Enable guest mode for xxscreeps.', false)
         .option('--beautify', 'Formats .js files loaded in the client for debugging.', false)
+        .option(
+            '--patch <patch-name>',
+            'Enable application of patch named patch-name',
+            (value, previous) => {
+                previous.add(value);
+                return previous;
+            },
+            new Set<string>(),
+        )
+        .option(
+            '--no_patch <patch-name>',
+            'Disable application of patch named patch-name',
+            (value, previous) => {
+                previous.add(value);
+                return previous;
+            },
+            new Set<string>(),
+        )
+        .option('--list_patches', 'Show the full list of patches', false)
         .option('--debug', 'Display verbose errors for development.', false);
 
     program.parse();
     return program.opts();
 })();
+
+if (argv.list_patches) {
+    listPatches();
+    process.exit(0);
+}
+checkPatches(argv.patch, argv.no_patch);
 
 /** The URL Steamless is listening at (possibly within a container) */
 const hostURL = (() => {

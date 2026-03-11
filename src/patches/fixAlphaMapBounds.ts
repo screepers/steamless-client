@@ -2,9 +2,10 @@ import { applyPatch, Patch } from './helpers';
 
 const patch: Patch = {
     id: 'fix-alpha-map-bounds',
+    description: 'Forces the alpha map to have much larger bounds than it calculates, allowing to scroll further.',
+    disabled: true,
     match: (url: string) => url === 'app2/main.js',
     async apply(src: string) {
-        // Bounds fix for the alpha map
         // ./node_modules/@screeps/map/dist/constants.js
         src = applyPatch(src, /exports\.MIN_SCALE = \.4;/, 'exports.MIN_SCALE = .3');
 

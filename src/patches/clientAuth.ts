@@ -6,6 +6,7 @@ import { applyPatch, Patch } from './helpers';
 
 const patch: Patch = {
     id: 'client-auth',
+    description: 'Manage settings in local storage and xxscreeps guest auth',
     match: (url: string) => url === 'index.html',
     async apply(src: string, server: Server, argv: Args) {
         const { backend } = server;

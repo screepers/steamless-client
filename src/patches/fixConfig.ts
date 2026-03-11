@@ -5,6 +5,7 @@ import { applyPatch, MultiPatch } from './helpers';
 
 const patch: MultiPatch = {
     id: 'fix-config',
+    description: '(Core) Fix the server configuration to be able to work against private servers',
     patches: [
         {
             match: (url: string) => url === 'config.js',

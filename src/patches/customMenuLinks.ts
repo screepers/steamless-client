@@ -5,6 +5,7 @@ import { applyPatch, Patch } from './helpers';
 
 const patch: Patch = {
     id: 'custom-menu-links',
+    description: 'Customize some of the menu links',
     match: (url: string) => url === 'index.html',
     async apply(src: string, server: Server) {
         const { backend, isOfficial } = server;

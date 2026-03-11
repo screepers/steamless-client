@@ -2,10 +2,9 @@ import { applyPatch, Patch } from './helpers';
 
 const patch: Patch = {
     id: 'format-market-numbers',
+    description: 'Format numbers according to user locale in the market pages',
     match: (url: string) => url === 'app2/main.js',
     async apply(src: string) {
-        // Replace some of the number formatting in the market pages
-
         // # All orders
         // Price + std on resource tiles: ./src2/app/market.module/resource-price.component/resource-price.component.pug
         src = applyPatch(src, /{{ data\.avgPrice }}/g, '{{ data.avgPrice.toLocaleString() }}');

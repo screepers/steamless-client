@@ -2,9 +2,9 @@ import { applyPatch, Patch } from './helpers';
 
 const patch: Patch = {
     id: 'remove-tracking',
+    description: '(Core) Remove tracking pixels',
     match: (url: string) => url === 'index.html',
     async apply(src: string) {
-        // Remove tracking pixels
         src = applyPatch(
             src,
             /<script[^>]*>[^>]*xsolla[^>]*<\/script>/g,

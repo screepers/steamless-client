@@ -2,10 +2,9 @@ import { applyPatch, Patch } from './helpers';
 
 const patch: Patch = {
     id: 'portal-info',
+    description: 'Show more information about portals in the object inspector (stability, stable date).',
     match: (url: string) => url === 'components/game/room/properties/portal.html',
     async apply(src: string) {
-        // Fix the portal stability info showing only if it's an intershard portal
-        // Additionally, expose the stable date in the inspector
         const unstableDateInfo =
             "<div ng-if='Room.selectedObject.unstableDate'>\n" +
             '<label>Stable until:</label>\n' +

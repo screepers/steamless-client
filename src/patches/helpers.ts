@@ -1,13 +1,22 @@
 import { Args } from 'clientApp';
 import { Server } from 'utils/server';
 
-interface PatchBase {
+interface Patcher {
     match: (url: string) => boolean;
     apply(source: string, server: Server, args: Args): Promise<string>;
 }
 
-export type Patch = { id: string } & PatchBase;
-export type MultiPatch = { id: string; patches: PatchBase[] };
+interface PatchBase {
+    /** Identifier for the patch */
+    id: string;
+    /** A short description; used by --list_patches */
+    description: string;
+    /** Whether this patch is disabled by default */
+    disabled?: true;
+}
+
+export type Patch = PatchBase & Patcher;
+export type MultiPatch = PatchBase & { patches: Patcher[] };
 
 export type AnyPatch = Patch | MultiPatch;
 
