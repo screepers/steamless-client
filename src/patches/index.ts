@@ -17,6 +17,7 @@ import removeTracking from './removeTracking';
 import serverStats from './serverStats';
 import stripAws from './stripAws';
 import terrainTilesProfileView from './terrainTilesProfileView';
+import versionUpdate from './versionUpdate';
 
 const patches: AnyPatch[] = [
     fixConfig,
@@ -31,6 +32,7 @@ const patches: AnyPatch[] = [
     formatMarketNumbers,
     highPerfWebGL,
     serverStats,
+    versionUpdate,
     // Must be last
     beautify,
 ];
