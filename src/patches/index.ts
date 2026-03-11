@@ -10,6 +10,7 @@ import clientAuth from './clientAuth';
 import customMenuLinks from './customMenuLinks';
 import fixConfig from './fixConfig';
 import formatMarketNumbers from './formatMarketNumbers';
+import highPerfWebGL from './highPerfWebGL';
 import placeSpawnDefaultOff from './placeSpawnDefaultOff';
 import portalInfo from './portalInfo';
 import removeTracking from './removeTracking';
@@ -27,6 +28,7 @@ const patches: AnyPatch[] = [
     portalInfo,
     fixAlphaMapBounds,
     formatMarketNumbers,
+    highPerfWebGL,
     // Must be last
     beautify,
 ];
