@@ -4,27 +4,17 @@ import chalk from 'chalk';
 import { createReadStream, promises as fs } from 'fs';
 import httpProxy from 'http-proxy';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import jsBeautify from 'js-beautify';
 import JSZip from 'jszip';
 import Koa from 'koa';
 import koaConditionalGet from 'koa-conditional-get';
 import path from 'path';
 import { Transform } from 'stream';
 import { URL, fileURLToPath } from 'url';
-import { clientAuth } from './inject/clientAuth';
-import { customMenuLinks } from './inject/customMenuLinks';
-import { roomDecorations } from './inject/roomDecorations';
-import { Server, Route, ServerOptions } from './utils/server';
+import { AWS_HOST, Server } from './utils/server';
 import { handleProxyError, handleServerError, logError } from './utils/errors';
 import { getScreepsPath } from './utils/gamePath';
-import {
-    generateScriptTag,
-    getCommunityPages,
-    getServerListConfig,
-    isOfficialLikeVersion,
-    mimeTypes,
-    applyPatch,
-} from './utils/utils';
+import { getCommunityPages, getServerListConfig, mimeTypes } from './utils/utils';
+import { applyPatches, checkPatches, hasPatches, listPatches } from 'patches';
 
 // Get the app directory and version
 const __filename = fileURLToPath(import.meta.url);
@@ -36,9 +26,8 @@ const version = packageJson.version || '1.0.0';
 const arrow = '\u2192';
 const localhost = 'localhost';
 const defaultPort = 8080;
-const awsHost = 'https://s3.amazonaws.com';
 
-interface Args {
+export interface Args {
     package?: string;
     host: string;
     port: number;
@@ -51,6 +40,9 @@ interface Args {
     guest: boolean;
     beautify: boolean;
     debug: boolean;
+    list_patches: boolean;
+    patch: Set<string>;
+    no_patch: Set<string>;
 }
 
 // Parse program arguments
@@ -89,11 +81,36 @@ const argv: Args = (() => {
         .option('--server_list <path>', 'Path to a custom server list json config file.')
         .option('--guest', 'Enable guest mode for xxscreeps.', false)
         .option('--beautify', 'Formats .js files loaded in the client for debugging.', false)
+        .option(
+            '--patch <patch-name>',
+            'Enable application of patch named patch-name',
+            (value, previous) => {
+                previous.add(value);
+                return previous;
+            },
+            new Set<string>(),
+        )
+        .option(
+            '--no_patch <patch-name>',
+            'Disable application of patch named patch-name',
+            (value, previous) => {
+                previous.add(value);
+                return previous;
+            },
+            new Set<string>(),
+        )
+        .option('--list_patches', 'Show the full list of patches', false)
         .option('--debug', 'Display verbose errors for development.', false);
 
     program.parse();
     return program.opts();
 })();
+
+if (argv.list_patches) {
+    listPatches();
+    process.exit(0);
+}
+checkPatches(argv.patch, argv.no_patch);
 
 /** The URL Steamless is listening at (possibly within a container) */
 const hostURL = (() => {
@@ -134,7 +151,7 @@ console.log('🧩', chalk.yellowBright(`Screepers Steamless Client v${version}`)
 // Create proxy
 const proxy = httpProxy.createProxyServer({ changeOrigin: true });
 proxy.on('error', (err, _req, res) => handleProxyError(err, res, argv.debug));
-const awsProxy = createProxyMiddleware({ target: awsHost, changeOrigin: true });
+const awsProxy = createProxyMiddleware({ target: AWS_HOST, changeOrigin: true });
 
 // Locate and read `package.nw`
 const readPackageData = async () => {
@@ -231,7 +248,7 @@ koa.use(async (context, next) => {
     const server = Server.fromRequest(urlFromRequest(context.header.host), context.path);
     if (!server) return;
 
-    const { backend, endpoint, isOfficial, backendPath } = server;
+    const { endpoint } = server;
 
     // We do this to not get caught in the server-side redirect
     const urlPath = endpoint === '/' ? 'index.html' : endpoint.substring(1);
@@ -245,286 +262,9 @@ koa.use(async (context, next) => {
 
     // Rewrite various payloads
     context.body = await (async function () {
-        if (urlPath === 'index.html') {
+        if (hasPatches(urlPath)) {
             let src = await file.async('text');
-
-            // Client app menu links
-            const seasonLink = isOfficial
-                ? server.getURL(Route.ROOT, { backend: 'https://screeps.com/season', path: false })
-                : server.getURL(Route.ROOT, { path: false });
-            const ptrLink = isOfficial
-                ? server.getURL(Route.ROOT, { backend: 'https://screeps.com/ptr', path: false })
-                : undefined;
-            const changeServerLink = server.getURL(Route.ROOT, { subdomain: false, backend: false, path: false });
-
-            // Inject startup script
-            const header = '<title>Screeps</title>';
-            const replaceHeader = [
-                header,
-                generateScriptTag(clientAuth, { backend, guest: argv.guest }),
-                generateScriptTag(roomDecorations, { backend, awsHost }),
-                generateScriptTag(customMenuLinks, { backend, seasonLink, ptrLink, changeServerLink }),
-            ].join('\n');
-            src = applyPatch(src, header, replaceHeader);
-
-            // Remove tracking pixels
-            src = applyPatch(
-                src,
-                /<script[^>]*>[^>]*xsolla[^>]*<\/script>/g,
-                '<script>xnt = new Proxy(() => xnt, { get: () => xnt })</script>',
-            );
-            src = applyPatch(
-                src,
-                /<script[^>]*>[^>]*facebook[^>]*<\/script>/g,
-                '<script>fbq = new Proxy(() => fbq, { get: () => fbq })</script>',
-            );
-            src = applyPatch(
-                src,
-                /<script[^>]*>[^>]*google[^>]*<\/script>/g,
-                '<script>ga = new Proxy(() => ga, { get: () => ga })</script>',
-            );
-            src = applyPatch(
-                src,
-                /<script[^>]*>[^>]*mxpnl[^>]*<\/script>/g,
-                '<script>mixpanel = new Proxy(() => mixpanel, { get: () => mixpanel })</script>',
-            );
-            src = applyPatch(
-                src,
-                /<script[^>]*>[^>]*twttr[^>]*<\/script>/g,
-                '<script>twttr = new Proxy(() => twttr, { get: () => twttr })</script>',
-            );
-            src = applyPatch(
-                src,
-                /<script[^>]*>[^>]*onRecaptchaLoad[^>]*<\/script>/g,
-                '<script>function onRecaptchaLoad(){}</script>',
-            );
-            return src;
-        } else if (urlPath === 'config.js') {
-            let src = await file.async('text');
-            const opts: ServerOptions = { backend: true, path: false };
-
-            // Replace API_URL, HISTORY_URL, WEBSOCKET_URL, and PREFIX in the server config
-            const apiPath = server.getURL(Route.API, opts);
-            src = applyPatch(src, /(API_URL = ')[^']*/, `$1${apiPath}/`);
-
-            const historyPath = server.getURL(Route.HISTORY, {
-                ...opts,
-                // Season actually shares history storage with MMO, so just override
-                backend: server.isSeason ? 'https://screeps.com/' : undefined,
-            });
-            src = applyPatch(src, /(HISTORY_URL = ')[^']*/, `$1${historyPath}/`);
-
-            const socketPath = server.getURL(Route.SOCKET, opts);
-            src = applyPatch(src, /(WEBSOCKET_URL = ')[^']*/, `$1${socketPath}/`);
-
-            const prefixValue = backendPath?.substring(1) || '';
-            if (prefixValue) {
-                src = applyPatch(src, /(PREFIX: ')[^']*/, `$1${prefixValue}`);
-            }
-
-            const ptrValue = server.isPtr ? 'true' : 'false';
-            if (server.isPtr) {
-                src = applyPatch(src, /(PTR: )[^,]*/, `$1${ptrValue}`);
-            }
-
-            const debugValue = argv.debug ? 'true' : 'false';
-            if (argv.debug) {
-                src = applyPatch(src, /(DEBUG: )[^,]*/, `$1${debugValue}`);
-            }
-
-            return src;
-        } else if (context.path.endsWith('.js')) {
-            let src = await file.async('text');
-
-            if (urlPath.startsWith('app2/main.')) {
-                // Modify getData() to fetch from the correct API path
-                src = applyPatch(src, /fetch\(apiUrl \+ "version"\)/g, 'fetch(window.CONFIG.API_URL+"version")');
-                // Remove fetch to forum RSS feed
-                src = applyPatch(src, /fetch\(RSS_FORUM_URL\)/g, 'Promise.resolve()');
-                // Remove AWS host from rewards URL
-                src = applyPatch(src, /https:\/\/s3\.amazonaws\.com/g, '');
-                // Replace some of the number formatting in the market pages
-
-                // # All orders
-                // Price + std on resource tiles: ./src2/app/market.module/resource-price.component/resource-price.component.pug
-                src = applyPatch(src, /{{ data\.avgPrice }}/g, '{{ data.avgPrice.toLocaleString() }}');
-                src = applyPatch(src, /{{ data\.stddevPrice }}/g, '{{ data.stddevPrice.toLocaleString() }}');
-
-                // # Resource info dialog
-                // Buying/selling tables, ./src2/app/market.module/table-orders/table-orders.component.pug
-                src = applyPatch(src, /{{ order\.price\.toFixed\(3\) }}/g, '{{ order.price.toLocaleString() }}');
-                src = applyPatch(src, /{{ order\.amount \| number }}/g, '{{ order.amount.toLocaleString() }}');
-                src = applyPatch(
-                    src,
-                    /{{ order\.remainingAmount \| number }}/g,
-                    '{{ order.remainingAmount.toLocaleString() }}',
-                );
-
-                // Price history, ./src2/app/market.module/table-price-history/table-price-history.component.pug
-                src = applyPatch(
-                    src,
-                    /{{ order.transactions\| number:'1\.0-3' }}/g,
-                    '{{ order.transactions.toLocaleString() }}',
-                );
-                src = applyPatch(src, /{{ order\.volume \| number:'1\.0-3'}}/g, '{{ order.volume.toLocaleString() }}');
-                src = applyPatch(src, /{{ order\.avgPrice }}/g, '{{ order.avgPrice.toLocaleString() }}');
-                src = applyPatch(
-                    src,
-                    /{{ order\.stddevPrice\.toFixed\(3\) }}/g,
-                    '{{ order.stddevPrice.toLocaleString() }}',
-                );
-
-                // # My orders, ./src2/app/market.module/table-my-orders/table-my-orders.component.pug
-                // There's also an `order.price` here, but it's been handled above
-                src = applyPatch(
-                    src,
-                    /{{ order\.totalAmount \| number }}/g,
-                    '{{ order.totalAmount.toLocaleString() }}',
-                );
-
-                // # History, ./src2/app/market.module/table-history/table-history.component.pug
-                src = applyPatch(src, /{{ transaction\.tick }}/g, '{{ transaction.tick.toLocaleString() }}');
-                src = applyPatch(
-                    src,
-                    /{{ transaction\.change\.toFixed\(3\) }}/g,
-                    '{{ transaction.change.toLocaleString() }}',
-                );
-                src = applyPatch(
-                    src,
-                    /{{ transaction\.balance\.toFixed\(3\) }}/g,
-                    '{{ transaction.balance.toLocaleString() }}',
-                );
-
-                // Bounds fix for the alpha map
-                // ./node_modules/@screeps/map/dist/constants.js
-                src = applyPatch(src, /exports\.MIN_SCALE = \.4;/, 'exports.MIN_SCALE = .3');
-
-                // ./src2/app/world-map.module/world-map-size.resolver.ts
-                src = applyPatch(
-                    src,
-                    /resolve\({ width: width, height: height }\);/,
-                    "resolve(shard !== 'shardSeason' ? { width: width, height: height } : { width: 512, height: 512 });",
-                );
-
-                // Fix alpha map decoration loads to AWS by sending them through the proxy set up for the injected roomDecorations CORS fix
-                // getTextureByUrl() in ./node_modules/@screeps/map/dist/utils.js
-                src = applyPatch(
-                    src,
-                    /const img = await loadImage\(url\);/,
-                    "const img = await loadImage(url.replace('https://s3.amazonaws.com/static.screeps.com/', '/static.screeps.com/'));",
-                );
-            } else if (urlPath.startsWith('vendor/renderer/renderer.js')) {
-                // Modify renderer to remove AWS host from loadElement()
-                src = applyPatch(
-                    src,
-                    /\(this\.data\.src=this\.url\)/g,
-                    `(this.data.src=this.url.replace("${awsHost}",""))`,
-                );
-                // Remove AWS host from image URLs
-                src = applyPatch(src, /src=t,/g, `src=t.replace("${awsHost}",""),`);
-
-                // The server sometimes sends completely broken objects which break the viewer
-                // https://discord.com/channels/860665589738635336/1337213532198142044
-                src = applyPatch(
-                    src,
-                    't.forEach(t=>{null!==t.x&&null!==t.y&&(e(t)&&(i[t.x][t.y]=t,a=!0),o[t.x][t.y]=!1)})',
-                    't.forEach((t)=>{!(null===t.x||undefined===t.x)&&!(null===t.y||undefined===t.y)&&(e(t)&&((i[t.x][t.y]=t),(a=!0)),(o[t.x][t.y]=!1));});',
-                );
-            } else if (urlPath === 'build.min.js') {
-                // Load backend info from underlying server
-                const backendURL = new URL(backend);
-                const isOfficialLike = isOfficial || (await isOfficialLikeVersion(server));
-                // Look for server options payload in build information
-                for (const match of src.matchAll(/\boptions=\{/g)) {
-                    for (let i = match.index!; i < src.length; ++i) {
-                        if (src.charAt(i) === '}') {
-                            try {
-                                const payload = src.substring(match.index!, i + 1);
-                                const _holder = new Function(payload);
-                                if (payload.includes('apiUrl')) {
-                                    // Inject host, port, and official
-                                    src = `${src.substring(0, i)},
-                                        host: ${JSON.stringify(backendURL.hostname)},
-                                        protocol: "${backendURL.protocol}",
-                                        port: ${backendURL.port || (backendURL.protocol === 'https:' ? '443' : '80')},
-                                        official: ${isOfficialLike},
-                                    } ${src.substring(i + 1)}`;
-                                }
-                                break;
-                            } catch (err) {}
-                        }
-                    }
-                }
-                if (!isOfficial) {
-                    // Replace room-history URL
-                    src = applyPatch(
-                        src,
-                        /http:\/\/"\+s\.options\.host\+":"\+s\.options\.port\+"\/room-history/g,
-                        server.getURL(Route.HISTORY, { path: false }),
-                    );
-
-                    // Replace official CDN with local assets
-                    src = applyPatch(src, /https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${backendURL}/assets`);
-                }
-
-                // Replace URLs with local client paths
-                src = applyPatch(src, /https:\/\/screeps\.com\/a\//g, server.getURL(Route.ROOT, { path: false }));
-
-                // Fix the hardcoded protocol in URLs
-                src = applyPatch(
-                    src,
-                    /"http:\/\/"\+([^\.]+)\.options\.host/g,
-                    '$1.options.protocol+"//"+$1.options.host',
-                );
-
-                // Remove the default-to-place-spawn behavior when you're not spawned in
-                src = applyPatch(
-                    src,
-                    'h.get("user/world-status").then(function(t){"empty"==t.status&&(P.selectedAction.action="spawn",',
-                    'h.get("user/world-status").then(function(t){"empty"==t.status&&(',
-                );
-            }
-            return argv.beautify ? jsBeautify(src) : src;
-        } else if (urlPath === 'components/profile/profile.html') {
-            let src = await file.async('text');
-
-            // Looks like a bug in the client; `isShards()` returns true whether there's any shards on the server,
-            // and that appears to be always true. Switch to `isMultiShard()` since that one checks if there's more
-            // than one shard, which is always false on a private server. Otherwise, we will tack on the shardName,
-            // which in the case of a private server, isn't even the shard's actual name but `rooms`, leading to a
-            // broken URL.
-            src = applyPatch(
-                src,
-                `<img ng:src="{{Profile.mapUrl}}{{isShards() ? shardName+'/' : ''}}{{roomName}}.png">`,
-                `<img ng:src="{{Profile.mapUrl}}{{isMultiShard() ? shardName+'/' : ''}}{{roomName}}.png">`,
-            );
-
-            return src;
-        } else if (urlPath === 'components/game/room/properties/portal.html') {
-            let src = await file.async('text');
-
-            // Fix the portal stability info showing only if it's an intershard portal
-            // Additionally, expose the stable date in the inspector
-            const unstableDateInfo =
-                "<div ng-if='Room.selectedObject.unstableDate'>\n" +
-                '<label>Stable until:</label>\n' +
-                "<span id='screepers-stable-date' data-unstabledate='{{Room.selectedObject.unstableDate}}'/>\n" +
-                '<script>\n' +
-                'setTimeout(() => {\n' +
-                "\tconst dateField = document.getElementById('screepers-stable-date');\n" +
-                '\tif (!dateField) return;\n' +
-                "\tconst date = dateField.getAttribute('data-unstabledate');\n" +
-                '\tconst unstableStamp = parseInt(date, 10)\n' +
-                '\tdateField.innerText = new Date(unstableStamp).toLocaleString()\n' +
-                '}, 20);\n' +
-                '</script>\n' +
-                '</div>\n';
-            src = applyPatch(
-                src,
-                "<div ng-if='Room.selectedObject.destination &amp;&amp; Room.selectedObject.destination.shard'>",
-                unstableDateInfo + "<div ng:if='!Room.selectedObject.unstableDate'>",
-            );
-            src = applyPatch(src, 'portal is stable yet', 'portal is stable');
+            src = await applyPatches(urlPath, src, server, argv);
             return src;
         } else {
             // JSZip doesn't implement their read stream correctly and it causes EPIPE crashes. Pass it

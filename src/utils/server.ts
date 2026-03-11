@@ -1,3 +1,4 @@
+export const AWS_HOST = 'https://s3.amazonaws.com';
 export interface ServerOptions {
     /** Whether to include the backend in the final URL. If a string is passed, it'll be used as an override backend URL */
     backend?: boolean | string;

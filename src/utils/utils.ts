@@ -3,7 +3,6 @@ import fetch from 'node-fetch';
 import path from 'path';
 import { Server, Route } from './server';
 import { ServerInfo } from './types';
-import { logError } from './errors';
 
 export const mimeTypes = {
     '.css': 'text/css',
@@ -103,12 +102,4 @@ export function getCommunityPages(): { title: string; url: string }[] {
         { title: "Muon's blog", url: 'https://bencbartlett.com/blog/tag/screeps/' },
         { title: "Harabi's blog", url: 'https://sy-harabi.github.io/' },
     ];
-}
-
-export function applyPatch(data: string, original: string | RegExp, replace: string) {
-    const repl = data.replace(original, replace);
-    if (data.localeCompare(repl) === 0) {
-        logError(`failed to apply patch! "${original}"`);
-    }
-    return repl;
 }
