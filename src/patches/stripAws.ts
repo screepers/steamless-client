@@ -12,7 +12,9 @@ const patch: MultiPatch = {
             async apply(src: string, server: Server) {
                 const { backend } = server;
                 const header = '<title>Screeps</title>';
-                const replaceHeader = [header, generateScriptTag(roomDecorations, { backend, AWS_HOST })].join('\n');
+                const replaceHeader = [header, generateScriptTag(roomDecorations, { backend, awsHost: AWS_HOST })].join(
+                    '\n',
+                );
                 src = applyPatch(src, header, replaceHeader);
                 return src;
             },
