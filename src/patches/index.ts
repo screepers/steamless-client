@@ -5,7 +5,6 @@ import { logError } from 'utils/errors';
 import chalk from 'chalk';
 
 import beautify from './beautify';
-import brokenReplays from './brokenReplays';
 import fixAlphaMapBounds from './fixAlphaMapBounds';
 import clientAuth from './clientAuth';
 import customMenuLinks from './customMenuLinks';
@@ -25,7 +24,6 @@ const patches: AnyPatch[] = [
     removeTracking,
     terrainTilesProfileView,
     placeSpawnDefaultOff,
-    brokenReplays,
     portalInfo,
     fixAlphaMapBounds,
     formatMarketNumbers,
