@@ -10,7 +10,7 @@ const patch: MultiPatch = {
         {
             match: (url: string) => url === 'config.js',
             async apply(src: string, server: Server, argv: Args) {
-                const opts: ServerOptions = { backend: true, path: false };
+                const opts: ServerOptions = { hostUrl: false, backend: true, path: false };
 
                 // Replace API_URL, HISTORY_URL, WEBSOCKET_URL, and PREFIX in the server config
                 const apiPath = server.getURL(Route.API, opts);
@@ -75,28 +75,13 @@ const patch: MultiPatch = {
                 // Load backend info from underlying server
                 const backendURL = new URL(backend);
                 const isOfficialLike = isOfficial || (await isOfficialLikeVersion(server));
+
                 // Look for server options payload in build information
-                for (const match of src.matchAll(/\boptions=\{/g)) {
-                    for (let i = match.index!; i < src.length; ++i) {
-                        if (src.charAt(i) === '}') {
-                            try {
-                                const payload = src.substring(match.index!, i + 1);
-                                if (payload.includes('apiUrl')) {
-                                    // Inject host, port, and official
-                                    src = `${src.substring(0, i)},
-                                                    host: ${JSON.stringify(backendURL.hostname)},
-                                                    protocol: "${backendURL.protocol}",
-                                                    port: ${backendURL.port || (backendURL.protocol === 'https:' ? '443' : '80')},
-                                                    official: ${isOfficialLike},
-                                                } ${src.substring(i + 1)}`;
-                                }
-                                break;
-                            } catch {
-                                //
-                            }
-                        }
-                    }
-                }
+                src = applyPatch(
+                    src,
+                    /(var t=this\.options={apiUrl:""),official:![0|1],(serverData:)/g,
+                    `$1,official:${isOfficialLike},protocol:"${backendURL.protocol}",host:"${backendURL.hostname}",port:${backendURL.port || (backendURL.protocol === 'https:' ? '443' : '80')},$2`,
+                );
                 if (!isOfficial) {
                     // Replace room-history URL
                     src = applyPatch(
@@ -106,7 +91,11 @@ const patch: MultiPatch = {
                     );
 
                     // Replace official CDN with local assets
-                    src = applyPatch(src, /https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${backendURL}/assets`);
+                    src = applyPatch(
+                        src,
+                        /https:\/\/d3os7yery2usni\.cloudfront\.net/g,
+                        server.getURL(Route.ASSETS, { hostUrl: false, path: false }),
+                    );
                 }
 
                 // Replace URLs with local client paths
