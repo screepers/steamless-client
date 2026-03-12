@@ -1,5 +1,7 @@
 export const AWS_HOST = 'https://s3.amazonaws.com';
 export interface ServerOptions {
+    /** Whether to include the host in the final URL  */
+    hostUrl?: boolean;
     /** Whether to include the backend in the final URL. If a string is passed, it'll be used as an override backend URL */
     backend?: boolean | string;
     /** Whether to add the subdomain to the public host */
@@ -147,15 +149,16 @@ export class Server {
     /**
      * Build a complete server url for a Screeps server
      */
-    getPublicUrl(opts?: Pick<ServerOptions, 'backend' | 'subdomain'>) {
+    getPublicUrl(opts?: Pick<ServerOptions, 'backend' | 'subdomain' | 'hostUrl'>) {
         const subdomain = this.subdomain && opts?.subdomain !== false ? `${this.subdomain}.` : '';
         const port =
             this.port &&
             ((this.protocol === 'http:' && this.port !== '80') || (this.protocol === 'https:' && this.port !== '443'))
                 ? `:${this.port}`
                 : '';
-        const backend = opts?.backend !== false ? `/(${this._getBackendUrl(opts)})` : '';
-        return `${this.protocol}//${subdomain}${this.host}${port}${backend}`;
+        const domain = opts?.hostUrl !== false ? `${this.protocol}//${subdomain}${this.host}${port}/` : '/';
+        const backend = opts?.backend !== false ? `(${this._getBackendUrl(opts)})` : '';
+        return `${domain}${backend}`;
     }
 
     /**

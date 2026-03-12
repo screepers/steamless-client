@@ -10,7 +10,7 @@ const patch: MultiPatch = {
         {
             match: (url: string) => url === 'config.js',
             async apply(src: string, server: Server, argv: Args) {
-                const opts: ServerOptions = { backend: true, path: false };
+                const opts: ServerOptions = { hostUrl: false, backend: true, path: false };
 
                 // Replace API_URL, HISTORY_URL, WEBSOCKET_URL, and PREFIX in the server config
                 const apiPath = server.getURL(Route.API, opts);
@@ -106,7 +106,11 @@ const patch: MultiPatch = {
                     );
 
                     // Replace official CDN with local assets
-                    src = applyPatch(src, /https:\/\/d3os7yery2usni\.cloudfront\.net/g, `${backendURL}/assets`);
+                    src = applyPatch(
+                        src,
+                        /https:\/\/d3os7yery2usni\.cloudfront\.net/g,
+                        server.getURL(Route.ASSETS, { hostUrl: false, path: false }),
+                    );
                 }
 
                 // Replace URLs with local client paths
