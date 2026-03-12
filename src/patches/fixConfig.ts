@@ -75,28 +75,13 @@ const patch: MultiPatch = {
                 // Load backend info from underlying server
                 const backendURL = new URL(backend);
                 const isOfficialLike = isOfficial || (await isOfficialLikeVersion(server));
+
                 // Look for server options payload in build information
-                for (const match of src.matchAll(/\boptions=\{/g)) {
-                    for (let i = match.index!; i < src.length; ++i) {
-                        if (src.charAt(i) === '}') {
-                            try {
-                                const payload = src.substring(match.index!, i + 1);
-                                if (payload.includes('apiUrl')) {
-                                    // Inject host, port, and official
-                                    src = `${src.substring(0, i)},
-                                                    host: ${JSON.stringify(backendURL.hostname)},
-                                                    protocol: "${backendURL.protocol}",
-                                                    port: ${backendURL.port || (backendURL.protocol === 'https:' ? '443' : '80')},
-                                                    official: ${isOfficialLike},
-                                                } ${src.substring(i + 1)}`;
-                                }
-                                break;
-                            } catch {
-                                //
-                            }
-                        }
-                    }
-                }
+                src = applyPatch(
+                    src,
+                    /(var t=this\.options={apiUrl:""),official:![0|1],(serverData:)/g,
+                    `$1,official:${isOfficialLike},protocol:"${backendURL.protocol}",host:"${backendURL.hostname}",port:${backendURL.port || (backendURL.protocol === 'https:' ? '443' : '80')},$2`,
+                );
                 if (!isOfficial) {
                     // Replace room-history URL
                     src = applyPatch(
