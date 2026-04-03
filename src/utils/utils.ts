@@ -101,5 +101,6 @@ export function getCommunityPages(): { title: string; url: string }[] {
         },
         { title: "Muon's blog", url: 'https://bencbartlett.com/blog/tag/screeps/' },
         { title: "Harabi's blog", url: 'https://sy-harabi.github.io/' },
+        { title: "Lord Greywether's blog", url: 'https://jonwinsley.com/categories/screeps' },
     ];
 }
