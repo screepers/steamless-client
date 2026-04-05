@@ -11,6 +11,7 @@ import customMenuLinks from './customMenuLinks.js';
 import fixConfig from './fixConfig.js';
 import formatMarketNumbers from './formatMarketNumbers.js';
 import highPerfWebGL from './highPerfWebGL.js';
+import normalizeStringPosix from './normalizeStringPosix.js';
 import placeSpawnDefaultOff from './placeSpawnDefaultOff.js';
 import portalInfo from './portalInfo.js';
 import removeTracking from './removeTracking.js';
@@ -24,6 +25,7 @@ const patches: AnyPatch[] = [
     fixConfig,
     stripAws,
     clientAuth,
+    normalizeStringPosix,
     customMenuLinks,
     removeTracking,
     terrainTilesProfileView,
