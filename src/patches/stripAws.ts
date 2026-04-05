@@ -35,20 +35,6 @@ const patch: MultiPatch = {
                 return src;
             },
         },
-        {
-            match: (url: string) => url === 'vendor/renderer/renderer.js',
-            async apply(src: string) {
-                // Modify renderer to remove AWS host from loadElement()
-                src = applyPatch(
-                    src,
-                    /\(this\.data\.src=this\.url\)/g,
-                    `(this.data.src=this.url.replace("${AWS_HOST}",""))`,
-                );
-                // Remove AWS host from image URLs
-                src = applyPatch(src, /src=t,/g, `src=t.replace("${AWS_HOST}",""),`);
-                return src;
-            },
-        },
     ],
 };
 
