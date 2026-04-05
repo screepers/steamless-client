@@ -63,8 +63,6 @@ const patch: MultiPatch = {
                     `${urlReplacerStr}\nthis._versionSrv.getData(urlReplacer($1)).then(function (versionData)`,
                 );
 
-                // Remove fetch to forum RSS feed
-                src = applyPatch(src, /fetch\(RSS_FORUM_URL\)/g, 'Promise.resolve()');
                 return src;
             },
         },
