@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { ServerResponse } from 'http';
 import type { Socket } from 'net';
-import { ServerError } from './types';
+import { ServerError } from './types.js';
 
 const errorCodes: Record<PropertyKey, string> = {
     EADDRINUSE: 'The port is already in use by another application.',

@@ -1,4 +1,4 @@
-import { applyPatch, MultiPatch } from './helpers';
+import { applyPatch, MultiPatch } from './helpers.js';
 
 const patch: MultiPatch = {
     id: 'server-stats',

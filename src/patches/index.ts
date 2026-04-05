@@ -1,24 +1,24 @@
-import { AnyPatch, PatchError } from './helpers';
-import { Server } from 'utils/server';
-import { Args } from 'clientApp';
-import { logError } from 'utils/errors';
+import { AnyPatch, PatchError } from './helpers.js';
+import { Server } from '../utils/server.js';
+import { Args } from '../clientApp.js';
+import { logError } from '../utils/errors.js';
 import chalk from 'chalk';
 
-import beautify from './beautify';
-import fixAlphaMapBounds from './fixAlphaMapBounds';
-import clientAuth from './clientAuth';
-import customMenuLinks from './customMenuLinks';
-import fixConfig from './fixConfig';
-import formatMarketNumbers from './formatMarketNumbers';
-import highPerfWebGL from './highPerfWebGL';
-import placeSpawnDefaultOff from './placeSpawnDefaultOff';
-import portalInfo from './portalInfo';
-import removeTracking from './removeTracking';
-import serverStats from './serverStats';
-import screepsAudio from './screepsAudio';
-import stripAws from './stripAws';
-import terrainTilesProfileView from './terrainTilesProfileView';
-import versionUpdate from './versionUpdate';
+import beautify from './beautify.js';
+import fixAlphaMapBounds from './fixAlphaMapBounds.js';
+import clientAuth from './clientAuth.js';
+import customMenuLinks from './customMenuLinks.js';
+import fixConfig from './fixConfig.js';
+import formatMarketNumbers from './formatMarketNumbers.js';
+import highPerfWebGL from './highPerfWebGL.js';
+import placeSpawnDefaultOff from './placeSpawnDefaultOff.js';
+import portalInfo from './portalInfo.js';
+import removeTracking from './removeTracking.js';
+import serverStats from './serverStats.js';
+import screepsAudio from './screepsAudio.js';
+import stripAws from './stripAws.js';
+import terrainTilesProfileView from './terrainTilesProfileView.js';
+import versionUpdate from './versionUpdate.js';
 
 const patches: AnyPatch[] = [
     fixConfig,

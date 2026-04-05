@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": "src",
     "outDir": "dist",
     "rootDir": "src",
     "allowSyntheticDefaultImports": true,
@@ -9,9 +8,9 @@
       "esnext",
       "dom"
     ],
-    "module": "ESNext",
-    "target": "ESNext",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "target": "esnext",
+    "moduleResolution": "node16",
     "noImplicitOverride": true,
     "sourceMap": false,
     "strict": true,

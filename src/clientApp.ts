@@ -10,11 +10,11 @@ import koaConditionalGet from 'koa-conditional-get';
 import path from 'path';
 import { Transform } from 'stream';
 import { URL, fileURLToPath } from 'url';
-import { AWS_HOST, Server } from './utils/server';
-import { handleProxyError, handleServerError, logError } from './utils/errors';
-import { getScreepsPath } from './utils/gamePath';
-import { getCommunityPages, getServerListConfig, mimeTypes } from './utils/utils';
-import { applyPatches, checkPatches, hasPatches, listPatches } from 'patches';
+import { AWS_HOST, Server } from './utils/server.js';
+import { handleProxyError, handleServerError, logError } from './utils/errors.js';
+import { getScreepsPath } from './utils/gamePath.js';
+import { getCommunityPages, getServerListConfig, mimeTypes } from './utils/utils.js';
+import { applyPatches, checkPatches, hasPatches, listPatches } from './patches/index.js';
 
 // Get the app directory and version
 const __filename = fileURLToPath(import.meta.url);

@@ -1,7 +1,7 @@
-import { generateScriptTag } from 'utils/utils';
-import { AWS_HOST, Server } from '../utils/server';
-import { applyPatch, MultiPatch } from './helpers';
-import { roomDecorations } from 'inject/roomDecorations';
+import { generateScriptTag } from '../utils/utils.js';
+import { AWS_HOST, Server } from '../utils/server.js';
+import { applyPatch, MultiPatch } from './helpers.js';
+import { roomDecorations } from '../inject/roomDecorations.js';
 
 const patch: MultiPatch = {
     id: 'strip-aws',

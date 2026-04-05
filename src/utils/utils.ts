@@ -1,8 +1,9 @@
 import { existsSync, promises as fs } from 'fs';
 import fetch from 'node-fetch';
 import path from 'path';
-import { Server, Route } from './server';
-import { ServerInfo } from './types';
+import { Server, Route } from './server.js';
+import { ServerInfo } from './types.js';
+import { URL } from 'url';
 
 export const mimeTypes = {
     '.css': 'text/css',

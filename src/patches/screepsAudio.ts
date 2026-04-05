@@ -1,6 +1,6 @@
-import { addScreepsAudio } from 'inject/screepsAudio';
-import { generateScriptTag } from '../utils/utils';
-import { applyPatch, Patch } from './helpers';
+import { addScreepsAudio } from '../inject/screepsAudio.js';
+import { generateScriptTag } from '../utils/utils.js';
+import { applyPatch, Patch } from './helpers.js';
 
 const patch: Patch = {
     id: 'screeps-audio',

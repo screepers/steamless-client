@@ -1,7 +1,7 @@
-import { customMenuLinks } from '../inject/customMenuLinks';
-import { Route, Server } from '../utils/server';
-import { generateScriptTag } from '../utils/utils';
-import { applyPatch, Patch } from './helpers';
+import { customMenuLinks } from '../inject/customMenuLinks.js';
+import { Route, Server } from '../utils/server.js';
+import { generateScriptTag } from '../utils/utils.js';
+import { applyPatch, Patch } from './helpers.js';
 
 const patch: Patch = {
     id: 'custom-menu-links',
