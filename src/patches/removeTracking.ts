@@ -32,6 +32,11 @@ const patch: Patch = {
         );
         src = applyPatch(
             src,
+            /<script[^>]*>[^>]*redditstatic.com\/ads\/pixel\.js[^>]*<\/script>/g,
+            '<script>reddit = new Proxy(() => reddit, { get: () => reddit })</script>',
+        );
+        src = applyPatch(
+            src,
             /<script[^>]*>[^>]*onRecaptchaLoad[^>]*<\/script>/g,
             '<script>function onRecaptchaLoad(){}</script>',
         );
