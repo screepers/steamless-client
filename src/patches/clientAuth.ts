@@ -1,8 +1,8 @@
-import { Args } from '../clientApp';
-import { clientAuth } from '../inject/clientAuth';
-import { Server } from '../utils/server';
-import { generateScriptTag } from '../utils/utils';
-import { applyPatch, Patch } from './helpers';
+import { Args } from '../clientApp.js';
+import { clientAuth } from '../inject/clientAuth.js';
+import { Server } from '../utils/server.js';
+import { generateScriptTag } from '../utils/utils.js';
+import { applyPatch, Patch } from './helpers.js';
 
 const patch: Patch = {
     id: 'client-auth',

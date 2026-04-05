@@ -1,3 +1,5 @@
+import { URL } from 'url';
+
 export const AWS_HOST = 'https://s3.amazonaws.com';
 export interface ServerOptions {
     /** Whether to include the host in the final URL  */

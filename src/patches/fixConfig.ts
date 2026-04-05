@@ -1,7 +1,7 @@
-import { Args } from 'clientApp';
-import { Route, Server, ServerOptions } from 'utils/server';
-import { isOfficialLikeVersion } from 'utils/utils';
-import { applyPatch, MultiPatch } from './helpers';
+import { Args } from '../clientApp.js';
+import { Route, Server, ServerOptions } from '../utils/server.js';
+import { isOfficialLikeVersion } from '../utils/utils.js';
+import { applyPatch, MultiPatch } from './helpers.js';
 
 const patch: MultiPatch = {
     id: 'fix-config',
@@ -63,8 +63,6 @@ const patch: MultiPatch = {
                     `${urlReplacerStr}\nthis._versionSrv.getData(urlReplacer($1)).then(function (versionData)`,
                 );
 
-                // Remove fetch to forum RSS feed
-                src = applyPatch(src, /fetch\(RSS_FORUM_URL\)/g, 'Promise.resolve()');
                 return src;
             },
         },

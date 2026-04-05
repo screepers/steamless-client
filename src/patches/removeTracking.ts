@@ -1,4 +1,4 @@
-import { applyPatch, Patch } from './helpers';
+import { applyPatch, Patch } from './helpers.js';
 
 const patch: Patch = {
     id: 'remove-tracking',
@@ -29,6 +29,11 @@ const patch: Patch = {
             src,
             /<script[^>]*>[^>]*twttr[^>]*<\/script>/g,
             '<script>twttr = new Proxy(() => twttr, { get: () => twttr })</script>',
+        );
+        src = applyPatch(
+            src,
+            /<script[^>]*>[^>]*redditstatic.com\/ads\/pixel\.js[^>]*<\/script>/g,
+            '<script>reddit = new Proxy(() => reddit, { get: () => reddit })</script>',
         );
         src = applyPatch(
             src,

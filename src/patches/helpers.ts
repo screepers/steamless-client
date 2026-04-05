@@ -1,5 +1,5 @@
-import { Args } from 'clientApp';
-import { Server } from 'utils/server';
+import { Args } from '../clientApp.js';
+import { Server } from '../utils/server.js';
 
 interface Patcher {
     match: (url: string) => boolean;

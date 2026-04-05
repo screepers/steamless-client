@@ -1,7 +1,7 @@
-import { generateScriptTag } from 'utils/utils';
-import { AWS_HOST, Server } from '../utils/server';
-import { applyPatch, MultiPatch } from './helpers';
-import { roomDecorations } from 'inject/roomDecorations';
+import { generateScriptTag } from '../utils/utils.js';
+import { AWS_HOST, Server } from '../utils/server.js';
+import { applyPatch, MultiPatch } from './helpers.js';
+import { roomDecorations } from '../inject/roomDecorations.js';
 
 const patch: MultiPatch = {
     id: 'strip-aws',
@@ -32,20 +32,6 @@ const patch: MultiPatch = {
                     /const img = await loadImage\(url\);/,
                     `const img = await loadImage(url.replace('${AWS_HOST}/static.screeps.com/', '/static.screeps.com/'));`,
                 );
-                return src;
-            },
-        },
-        {
-            match: (url: string) => url === 'vendor/renderer/renderer.js',
-            async apply(src: string) {
-                // Modify renderer to remove AWS host from loadElement()
-                src = applyPatch(
-                    src,
-                    /\(this\.data\.src=this\.url\)/g,
-                    `(this.data.src=this.url.replace("${AWS_HOST}",""))`,
-                );
-                // Remove AWS host from image URLs
-                src = applyPatch(src, /src=t,/g, `src=t.replace("${AWS_HOST}",""),`);
                 return src;
             },
         },

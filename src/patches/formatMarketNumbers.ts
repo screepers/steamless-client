@@ -1,4 +1,4 @@
-import { applyPatch, Patch } from './helpers';
+import { applyPatch, Patch } from './helpers.js';
 
 const patch: Patch = {
     id: 'format-market-numbers',

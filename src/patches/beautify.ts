@@ -1,7 +1,7 @@
-import { Patch } from './helpers';
+import { Patch } from './helpers.js';
 import jsBeautify from 'js-beautify';
-import { Server } from 'utils/server';
-import { Args } from 'clientApp';
+import { Server } from '../utils/server.js';
+import { Args } from '../clientApp.js';
 
 const patch: Patch = {
     id: 'beautify',
