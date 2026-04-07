@@ -14,6 +14,7 @@ import highPerfWebGL from './highPerfWebGL.js';
 import normalizeStringPosix from './normalizeStringPosix.js';
 import placeSpawnDefaultOff from './placeSpawnDefaultOff.js';
 import portalInfo from './portalInfo.js';
+import quietConsole from './quietConsole.js';
 import removeTracking from './removeTracking.js';
 import serverStats from './serverStats.js';
 import screepsAudio from './screepsAudio.js';
@@ -37,6 +38,7 @@ const patches: AnyPatch[] = [
     serverStats,
     versionUpdate,
     screepsAudio,
+    quietConsole,
     // Must be last
     beautify,
 ];
