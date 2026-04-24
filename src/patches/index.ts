@@ -1,7 +1,7 @@
 import { AnyPatch, PatchError } from './helpers.js';
 import { Server } from '../utils/server.js';
 import { Args } from '../clientApp.js';
-import { logError } from '../utils/errors.js';
+import { logError, logWarning } from '../utils/errors.js';
 import chalk from 'chalk';
 
 import beautify from './beautify.js';
@@ -58,8 +58,7 @@ export function checkPatches(yesPatch: Set<string>, noPatch: Set<string>) {
     }
     for (const id of [...yesPatch, ...noPatch]) {
         if (patches.find((p) => p.id === id)) continue;
-        logError(`unknown patch id '${id}'`);
-        process.exit(1);
+        logWarning(`unknown patch id '${id}', ignoring`);
     }
 }
 

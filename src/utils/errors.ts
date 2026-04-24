@@ -31,6 +31,13 @@ export function logError(...args: unknown[]) {
 }
 
 /**
+ * Log a message to the console with error styling.
+ */
+export function logWarning(...args: unknown[]) {
+    console.error('⚠️', chalk.bold.yellow('Error'), ...args);
+}
+
+/**
  * Log proxy errors to the console with error styling.
  */
 export function handleProxyError(err: ServerError, res: ServerResponse | Socket, debug?: boolean) {
