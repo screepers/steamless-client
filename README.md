@@ -69,7 +69,7 @@ Example:
 ```yaml
 services:
   client:
-    image: "node:20"
+    image: "node:24"
     volumes:
       - ${SCREEPS_NW_PATH:?"SCREEPS_NW_PATH not set"}:/screeps.nw
       # Defines a volume for the NPM cache to speed up startup
