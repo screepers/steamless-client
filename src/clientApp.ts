@@ -153,12 +153,12 @@ const proxy = httpProxy.createProxyServer({ changeOrigin: true });
 proxy.on('error', (err, _req, res) => handleProxyError(err, res, argv.debug));
 const awsProxy = createProxyMiddleware({ target: AWS_HOST, changeOrigin: true });
 
+const pkgPath = argv.package ?? (await getScreepsPath());
+
 // Locate and read `package.nw`
 const readPackageData = async () => {
-    const pkgPath = argv.package ?? (await getScreepsPath());
     try {
         if (pkgPath) {
-            console.log('📦', chalk.dim('Package', arrow), chalk.gray(pkgPath));
             return Promise.all([fs.readFile(pkgPath), fs.stat(pkgPath)]);
         }
     } catch {
@@ -176,6 +176,26 @@ const [data, stat] = await readPackageData();
 // Read package zip metadata
 const zip = new JSZip();
 await zip.loadAsync(new Uint8Array(data));
+
+let pkg;
+try {
+    const clientPackage = (await zip.file('package.json')?.async('text')) ?? '{}';
+    pkg = JSON.parse(clientPackage);
+} catch {
+    //
+}
+
+// Ping the official server to check the deployed version
+const req = await fetch('https://screeps.com/api/version');
+const res = await req.json();
+
+console.log(
+    '📦',
+    chalk.dim('Package', arrow),
+    chalk.gray(pkgPath),
+    chalk.gray(`v${pkg.packageVersion}`),
+    res.package !== pkg.packageVersion ? chalk.red(`v${res.package} available!`) : chalk.green('Up to date'),
+);
 
 // HTTP header is only accurate to the minute
 const lastModified = stat.mtime;
