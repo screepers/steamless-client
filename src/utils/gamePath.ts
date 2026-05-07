@@ -14,7 +14,11 @@ export async function getScreepsPath() {
         case 'darwin': {
             // MacOS, checks for screeps in the default Steam location
             const steamPath = path.join(os.homedir(), 'Library', 'Application Support', 'Steam');
-            return getScreepsPackagePath(steamPath);
+            const pkgPath = getScreepsPackagePath(steamPath);
+            if (pkgPath) {
+                return pkgPath;
+            }
+            break;
         }
 
         case 'linux': {
@@ -29,7 +33,6 @@ export async function getScreepsPath() {
                         return screepsPath;
                     }
                 }
-                return null;
             }
 
             // Linux, checks for screeps in common Steam locations within the user's home directory
@@ -46,7 +49,7 @@ export async function getScreepsPath() {
                     return screepsPath;
                 }
             }
-            return null;
+            break;
         }
 
         case 'win32': {
@@ -63,12 +66,21 @@ export async function getScreepsPath() {
             const programFilesPath =
                 env['PROGRAMFILES(X86)'] || path.join(env.SystemDrive || 'C:', 'Program Files (x86)');
             steamPath = path.join(programFilesPath, 'Steam');
-            return getScreepsPackagePath(steamPath);
+            const pkgPath = getScreepsPackagePath(steamPath);
+            if (pkgPath) {
+                return pkgPath;
+            }
+            break;
         }
+
+        default:
+            logError(`Unsupported operating system '${platform}'.`);
+            process.exit(1);
+            break;
     }
 
-    logError(`Unsupported operating system '${platform}'.`);
-    return null;
+    logError(`Unable to locate Screeps package`);
+    process.exit(1);
 }
 
 /**
