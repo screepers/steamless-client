@@ -21,6 +21,7 @@ import screepsAudio from './screepsAudio.js';
 import stripAws from './stripAws.js';
 import terrainTilesProfileView from './terrainTilesProfileView.js';
 import versionUpdate from './versionUpdate.js';
+import worldMapNewTab from './worldMapNewTab.js';
 
 const patches: AnyPatch[] = [
     fixConfig,
@@ -38,6 +39,7 @@ const patches: AnyPatch[] = [
     serverStats,
     versionUpdate,
     screepsAudio,
+    worldMapNewTab,
     quietConsole,
     // Must be last
     beautify,
