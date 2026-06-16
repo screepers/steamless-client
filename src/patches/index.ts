@@ -20,6 +20,7 @@ import serverStats from './serverStats.js';
 import screepsAudio from './screepsAudio.js';
 import stripAws from './stripAws.js';
 import terrainTilesProfileView from './terrainTilesProfileView.js';
+import tokenAuth from './tokenAuth.js';
 import versionUpdate from './versionUpdate.js';
 import worldMapNewTab from './worldMapNewTab.js';
 
@@ -35,6 +36,7 @@ const patches: AnyPatch[] = [
     portalInfo,
     fixAlphaMapBounds,
     formatMarketNumbers,
+    tokenAuth,
     highPerfWebGL,
     serverStats,
     versionUpdate,
