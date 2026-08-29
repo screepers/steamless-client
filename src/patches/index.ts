@@ -15,6 +15,7 @@ import normalizeStringPosix from './normalizeStringPosix.js';
 import placeSpawnDefaultOff from './placeSpawnDefaultOff.js';
 import portalInfo from './portalInfo.js';
 import quietConsole from './quietConsole.js';
+import quoteMapUrl from './quoteMapUrl.js';
 import removeTracking from './removeTracking.js';
 import serverStats from './serverStats.js';
 import screepsAudio from './screepsAudio.js';
@@ -32,6 +33,7 @@ const patches: AnyPatch[] = [
     customMenuLinks,
     removeTracking,
     terrainTilesProfileView,
+    quoteMapUrl,
     placeSpawnDefaultOff,
     portalInfo,
     fixAlphaMapBounds,
