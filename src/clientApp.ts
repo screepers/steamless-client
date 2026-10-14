@@ -13,7 +13,7 @@ import { URL, fileURLToPath } from 'url';
 import { AWS_HOST, Server } from './utils/server.js';
 import { handleProxyError, handleServerError, logError } from './utils/errors.js';
 import { getScreepsPath } from './utils/gamePath.js';
-import { getCommunityPages, getServerListConfig, mimeTypes } from './utils/utils.js';
+import { download, getCommunityPages, getServerListConfig, mimeTypes } from './utils/utils.js';
 import { applyPatches, checkPatches, hasPatches, listPatches } from './patches/index.js';
 
 // Get the app directory and version
@@ -29,6 +29,7 @@ const defaultPort = 8080;
 
 export interface Args {
     package?: string;
+    update?: boolean;
     host: string;
     port: number;
     public_hostname?: string;
@@ -56,6 +57,7 @@ const argv: Args = (() => {
             '--package <path>',
             "Path to the Screeps package.nw file. Use this if the path isn't automatically detected.",
         )
+        .option('--update', 'Update the native client', false)
         .option('--host <address>', `Changes the host address. (default: ${localhost})`, localhost)
         .option(
             '--port <number>',
@@ -196,6 +198,17 @@ console.log(
     chalk.gray(`v${pkg.packageVersion}`),
     res.package !== pkg.packageVersion ? chalk.red(`v${res.package} available!`) : chalk.green('Up to date'),
 );
+
+if (argv.update) {
+    if (res.package !== pkg.packageVersion) {
+        console.log('Updating client…');
+
+        await download(`https://screeps.com/packages/${res.package}`, pkgPath);
+        process.exit(0);
+    }
+    console.log('👍', 'Client is up to date');
+    process.exit(0);
+}
 
 // HTTP header is only accurate to the minute
 const lastModified = stat.mtime;

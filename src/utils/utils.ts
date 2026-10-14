@@ -4,6 +4,7 @@ import path from 'path';
 import { Server, Route } from './server.js';
 import { ServerInfo } from './types.js';
 import { URL } from 'url';
+import { writeFile } from 'fs/promises';
 
 export const mimeTypes = {
     '.css': 'text/css',
@@ -104,4 +105,14 @@ export function getCommunityPages(): { title: string; url: string }[] {
         { title: "Harabi's blog", url: 'https://sy-harabi.github.io/' },
         { title: "Lord Greywether's blog", url: 'https://jonwinsley.com/categories/screeps' },
     ];
+}
+
+export async function download(url: string, path: string) {
+    const res = await fetch(url);
+
+    if (!res.ok) {
+        throw new Error(`Download failed: ${res.status} ${res.statusText}`);
+    }
+
+    await writeFile(path, Buffer.from(await res.arrayBuffer()));
 }
